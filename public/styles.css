@@ -1,0 +1,189 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f0f0f0;
+}
+
+#game-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 20px;
+    text-align: center;
+}
+
+h1 {
+    color: #333;
+}
+
+/* Login Screen */
+#login-screen {
+    margin: 20px auto;
+    max-width: 400px;
+}
+
+input, button {
+    padding: 10px;
+    margin: 10px 0;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+button {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #45a049;
+}
+
+/* Lobby Screen */
+#lobby-screen {
+    margin: 20px auto;
+}
+
+#player-list {
+    list-style-type: none;
+    padding: 0;
+    text-align: left;
+    max-width: 300px;
+    margin: 0 auto;
+}
+
+#player-list li {
+    padding: 10px;
+    margin: 5px 0;
+    background-color: #ddd;
+    border-radius: 5px;
+}
+
+/* Game Screen */
+#game-screen {
+    position: relative;
+}
+
+#opponents-area {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+}
+
+.opponent {
+    margin: 10px;
+    padding: 10px;
+    background-color: #ddd;
+    border-radius: 5px;
+    min-width: 100px;
+}
+
+#discard-pile {
+    margin: 20px auto;
+    height: 150px;
+}
+
+#player-hand {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin: 20px 0;
+}
+
+.card {
+    width: 80px;
+    height: 120px;
+    margin: 5px;
+    border-radius: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    font-weight: bold;
+    font-size: 18px;
+    cursor: pointer;
+    transition: transform 0.2s;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.card:hover {
+    transform: translateY(-10px);
+}
+
+.red {
+    background-color: #f44336;
+}
+
+.blue {
+    background-color: #2196F3;
+}
+
+.green {
+    background-color: #4CAF50;
+}
+
+.yellow {
+    background-color: #FFEB3B;
+    color: #333;
+}
+
+.wild {
+    background: linear-gradient(45deg, #f44336, #2196F3, #4CAF50, #FFEB3B);
+}
+
+#draw-card {
+    width: auto;
+    margin: 10px auto;
+    display: inline-block;
+}
+
+#game-status {
+    margin: 20px 0;
+    font-weight: bold;
+    min-height: 20px;
+}
+
+/* Color Picker */
+#color-picker {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    z-index: 100;
+}
+
+.color-options {
+    display: flex;
+    justify-content: space-between;
+}
+
+.color-btn {
+    width: 60px;
+    height: 60px;
+    margin: 10px;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.color-btn[data-color="red"] {
+    background-color: #f44336;
+}
+
+.color-btn[data-color="blue"] {
+    background-color: #2196F3;
+}
+
+.color-btn[data-color="green"] {
+    background-color: #4CAF50;
+}
+
+.color-btn[data-color="yellow"] {
+    background-color: #FFEB3B;
+}

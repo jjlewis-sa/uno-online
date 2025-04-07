@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multiplayer UNO Game</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+    <div id="game-container">
+        <h1>Multiplayer UNO Game</h1>
+        
+        <!-- Login Screen -->
+        <div id="login-screen">
+            <input type="text" id="username" placeholder="Enter your username">
+            <button id="create-game">Create Game</button>
+            <div id="join-game-container">
+                <input type="text" id="game-id" placeholder="Enter Game ID">
+                <button id="join-game">Join Game</button>
+            </div>
+        </div>
+        
+        <!-- Lobby Screen -->
+        <div id="lobby-screen" style="display: none;">
+            <h2>Game Lobby</h2>
+            <div>Game ID: <span id="game-id-display"></span></div>
+            <h3>Players:</h3>
+            <ul id="player-list"></ul>
+            <button id="start-game">Start Game</button>
+        </div>
+        
+        <!-- Game Screen -->
+        <div id="game-screen" style="display: none;">
+            <div id="opponents-area"></div>
+            <div id="discard-pile"></div>
+            <div id="player-area">
+                <div id="player-hand"></div>
+                <button id="draw-card">Draw Card</button>
+            </div>
+            <div id="game-status"></div>
+        </div>
+        
+        <!-- Color Picker for Wild Cards -->
+        <div id="color-picker" style="display: none;">
+            <h3>Choose a color:</h3>
+            <div class="color-options">
+                <button class="color-btn" data-color="red">Red</button>
+                <button class="color-btn" data-color="green">Green</button>
+                <button class="color-btn" data-color="blue">Blue</button>
+                <button class="color-btn" data-color="yellow">Yellow</button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="game.js"></script>
+</body>
+</html>
