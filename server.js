@@ -64,7 +64,7 @@ io.on('connection', (socket) => {
     // First card in discard pile
     let firstCard = games[gameId].deck.pop();
     // Make sure first card isn't a wild or draw four
-    while (firstCard.color === 'wild') {
+    while (firstCard.color === 'wild' || firstCard.value === 'draw four') {
       games[gameId].deck.unshift(firstCard);
       firstCard = games[gameId].deck.pop();
     }
@@ -96,14 +96,38 @@ io.on('connection', (socket) => {
     
     const card = game.players[playerIndex].hand[cardIndex];
     const topCard = game.discardPile[game.discardPile.length - 1];
+    const currentColor = topCard.selectedColor || topCard.color;
     
     // Check if card can be played
-    if (card.color === 'wild' || card.color === topCard.color || card.value === topCard.value) {
+    if (
+      card.color === 'wild' ||
+      card.color === currentColor ||
+      card.value === topCard.value
+    ) {
+      // Additional validation for draw four
+      if (card.value === 'draw four') {
+        // Check if player has any cards of the current color
+        const hasCurrentColor = game.players[playerIndex].hand.some(c =>
+          c.color === currentColor && c !== card
+        );
+        
+        if (hasCurrentColor) {
+          socket.emit('error', 'You can only play Draw Four if you have no cards of the current color');
+          return;
+        }
+      }
+      
       // Remove card from player's hand
       game.players[playerIndex].hand.splice(cardIndex, 1);
       
       // Add card to discard pile
       game.discardPile.push(card);
+      
+      // If it's a wild card, prompt player to select a color
+      if (card.color === 'wild') {
+        socket.emit('selectColor');
+        return; // Wait for color selection before continuing
+      }
       
       // Handle special cards
       handleSpecialCard(game, card);
@@ -120,6 +144,40 @@ io.on('connection', (socket) => {
       updateGameState(gameId);
     } else {
       socket.emit('error', 'Invalid card');
+    }
+  });
+  
+  // Select color
+  socket.on('selectColor', (data) => {
+    const { gameId, color } = data;
+    const game = games[gameId];
+    
+    if (!game) return;
+    
+    // Get the last played card
+    const lastCard = game.discardPile[game.discardPile.length - 1];
+    
+    // If it's a wild card, update its color
+    if (lastCard.color === 'wild') {
+      lastCard.selectedColor = color;
+      
+      // Handle special card effects after color selection
+      handleSpecialCard(game, lastCard);
+      
+      // Check for win condition
+      const playerIndex = game.players.findIndex(p => p.id === socket.id);
+      if (playerIndex !== -1 && game.players[playerIndex].hand.length === 0) {
+        io.to(gameId).emit('gameOver', {
+          winner: game.players[playerIndex].username
+        });
+        return;
+      }
+      
+      // Update game state for all players
+      updateGameState(gameId);
+      socket.emit('colorSelected'); // Notify the client that the color selection is complete
+    } else {
+      socket.emit('error', 'Invalid card selection');
     }
   });
   
@@ -239,30 +297,11 @@ function handleSpecialCard(game, card) {
       }
       break;
     case 'draw two':
-      const nextPlayer = (game.currentPlayer + game.direction) % game.players.length;
-      if (nextPlayer < 0) nextPlayer += game.players.length;
+      let nextPlayerIndex = (game.currentPlayer + game.direction) % game.players.length;
+      if (nextPlayerIndex < 0) nextPlayerIndex += game.players.length;
       
       // Draw 2 cards
       for (let i = 0; i < 2; i++) {
-        if (game.deck.length === 0) {
-          const lastCard = game.discardPile.pop();
-          game.deck = game.discardPile;
-          game.discardPile = [lastCard];
-          shuffleDeck(game.deck);
-        }
-        game.players[nextPlayer].hand.push(game.deck.pop());
-      }
-      
-      // Skip the next player
-      game.currentPlayer = (nextPlayer + game.direction) % game.players.length;
-      if (game.currentPlayer < 0) game.currentPlayer += game.players.length;
-      break;
-    case 'draw four':
-      const nextPlayerIndex = (game.currentPlayer + game.direction) % game.players.length;
-      if (nextPlayerIndex < 0) nextPlayerIndex += game.players.length;
-      
-      // Draw 4 cards
-      for (let i = 0; i < 4; i++) {
         if (game.deck.length === 0) {
           const lastCard = game.discardPile.pop();
           game.deck = game.discardPile;
@@ -276,6 +315,27 @@ function handleSpecialCard(game, card) {
       game.currentPlayer = (nextPlayerIndex + game.direction) % game.players.length;
       if (game.currentPlayer < 0) game.currentPlayer += game.players.length;
       break;
+    case 'draw four':
+      let nextPlayerIdx = (game.currentPlayer + game.direction) % game.players.length;
+      if (nextPlayerIdx < 0) nextPlayerIdx += game.players.length;
+      
+      // Check if we have enough cards in the deck, if not reshuffle
+      if (game.deck.length < 4) {
+        const lastCard = game.discardPile.pop(); // Save the top card (which is the draw four)
+        game.deck = [...game.deck, ...game.discardPile]; // Combine remaining deck with discard pile
+        game.discardPile = [lastCard]; // Reset discard pile with just the draw four
+        shuffleDeck(game.deck);
+      }
+      
+      // Draw 4 cards
+      for (let i = 0; i < 4; i++) {
+        game.players[nextPlayerIdx].hand.push(game.deck.pop());
+      }
+      
+      // Skip the next player
+      game.currentPlayer = (nextPlayerIdx + game.direction) % game.players.length;
+      if (game.currentPlayer < 0) game.currentPlayer += game.players.length;
+      break;
     default:
       // Move to next player
       game.currentPlayer = (game.currentPlayer + game.direction) % game.players.length;
@@ -286,10 +346,14 @@ function handleSpecialCard(game, card) {
 function updateGameState(gameId) {
   const game = games[gameId];
   
+  const topCard = game.discardPile[game.discardPile.length - 1];
+  const currentColor = topCard.selectedColor || topCard.color;
+  
   game.players.forEach(player => {
     io.to(player.id).emit('updateGame', {
       hand: player.hand,
-      currentCard: game.discardPile[game.discardPile.length - 1],
+      currentCard: topCard,
+      currentColor: currentColor,
       currentPlayer: game.players[game.currentPlayer].username,
       players: game.players.map(p => ({
         username: p.username,

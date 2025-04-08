@@ -22,6 +22,7 @@ let myHand = [];
 let selectedCardIndex = null;
 let isMyTurn = false;
 let pendingWildCard = null;
+let isSelectingColor = false; // New flag to track color selection process
 
 // Event Listeners
 document.getElementById('create-game').addEventListener('click', createGame);
@@ -87,13 +88,22 @@ function playCard(index) {
     
     const card = myHand[index];
     
-    // If it's a wild card, show color picker
+    // If it's a wild card, store the index and show color picker
     if (card.color === 'wild') {
         pendingWildCard = index;
-        colorPicker.style.display = 'block';
+        
+        // For draw four cards, we need to include the color in the playCard event
+        if (card.value === 'draw four') {
+            colorPicker.style.display = 'block';
+            // We'll handle this in selectWildCardColor
+        } else {
+            // For regular wild cards, just show the color picker
+            colorPicker.style.display = 'block';
+        }
         return;
     }
     
+    // For non-wild cards, send playCard event immediately
     socket.emit('playCard', {
         gameId: currentGameId,
         cardIndex: index
@@ -104,14 +114,50 @@ function playCard(index) {
 function selectWildCardColor(color) {
     if (pendingWildCard === null) return;
     
+    const card = myHand[pendingWildCard];
+    const cardIndex = pendingWildCard;
+    
+    // Set flag to indicate we're handling a color selection
+    isSelectingColor = true;
+    
+    // Hide the color picker immediately
+    colorPicker.style.display = 'none';
+    
+    // Reset pendingWildCard before any async operations
+    pendingWildCard = null;
+    
+    // Play the card with the selected color
     socket.emit('playCard', {
         gameId: currentGameId,
-        cardIndex: pendingWildCard,
-        wildColor: color
+        cardIndex: cardIndex
     });
     
-    colorPicker.style.display = 'none';
-    pendingWildCard = null;
+    // For draw four cards, we need to handle the color differently
+    if (card && card.value === 'draw four') {
+        // For draw four, we need to send the color immediately
+        socket.emit('selectColor', {
+            gameId: currentGameId,
+            color: color
+        });
+        
+        // Reset the flag after a delay to allow server processing
+        setTimeout(() => {
+            isSelectingColor = false;
+        }, 500);
+    } else {
+        // For regular wild cards, wait a bit before sending the color
+        setTimeout(() => {
+            socket.emit('selectColor', {
+                gameId: currentGameId,
+                color: color
+            });
+            
+            // Reset the flag after sending the color
+            setTimeout(() => {
+                isSelectingColor = false;
+            }, 400);
+        }, 100);
+    }
 }
 
 // Update the player's hand display
@@ -135,7 +181,10 @@ function updateDiscardPile(card) {
     discardPile.innerHTML = '';
     
     const cardElement = document.createElement('div');
-    cardElement.className = `card ${card.color}`;
+    
+    // Use the selected color for wild cards if available
+    const displayColor = card.selectedColor || card.color;
+    cardElement.className = `card ${displayColor}`;
     cardElement.innerHTML = `<span>${card.value}</span>`;
     
     discardPile.appendChild(cardElement);
@@ -238,13 +287,22 @@ socket.on('updateGame', (data) => {
     }
 });
 
+// Update the socket.on('selectColor') handler
+socket.on('selectColor', () => {
+    // Only show color picker if we're not already handling a wild card
+    // and not in the process of selecting a color
+    if (pendingWildCard === null && !isSelectingColor) {
+        colorPicker.style.display = 'block';
+    }
+});
+
 socket.on('cardDrawn', (card) => {
     showMessage('You drew a card');
 });
 
 socket.on('gameOver', (data) => {
-    const message = data.winner === myUsername ? 
-        'Congratulations! You won!' : 
+    const message = data.winner === myUsername ?
+        'Congratulations! You won!' :
         `Game over! ${data.winner} won.`;
     
     alert(message);

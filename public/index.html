@@ -24,7 +24,10 @@
         <!-- Lobby Screen -->
         <div id="lobby-screen" style="display: none;">
             <h2>Game Lobby</h2>
-            <div>Game ID: <span id="game-id-display"></span></div>
+            <div>
+                Game ID: <span id="game-id-display"></span>
+                <button id="share-whatsapp" class="share-button">Share via WhatsApp</button>
+            </div>
             <h3>Players:</h3>
             <ul id="player-list"></ul>
             <button id="start-game">Start Game</button>
@@ -54,5 +57,16 @@
     </div>
     
     <script src="game.js"></script>
+    <script>
+        // WhatsApp sharing functionality
+        document.getElementById('share-whatsapp').addEventListener('click', function() {
+            const gameId = document.getElementById('game-id-display').textContent;
+            const gameUrl = "http://41.76.110.84:3000/";
+            const message = `Join my UNO game! Go to ${gameUrl} and enter Game ID: ${gameId}`;
+            const encodedMessage = encodeURIComponent(message);
+            const whatsappUrl = `https://wa.me/?text=${encodedMessage}`;
+            window.open(whatsappUrl, '_blank');
+        });
+    </script>
 </body>
 </html>
