@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-   "clean-install": "rm -rf node_modules && npm install",
-  "build": "echo 'No build step required - static files are in public directory'"
+    "clean-install": "rm -rf node_modules && npm install",
+    "build": "echo 'No build step required - static files are in public directory'"
   },
   "keywords": [
     "uno",
