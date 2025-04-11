@@ -3,11 +3,8 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-  "start": "node index.js",
-  "build": "echo 'No build step required - static files are in public directory'",
-  "dev": "netlify dev",
-  "clean-install": "rm -rf node_modules && npm install"
+   "clean-install": "rm -rf node_modules && npm install",
+  "build": "echo 'No build step required - static files are in public directory'"
   },
   "keywords": [
     "uno",
