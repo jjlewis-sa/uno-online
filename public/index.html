@@ -54,6 +54,9 @@
                 <button id="draw-card">Draw Card</button>
             </div>
             <div id="game-status"></div>
+            <div id="game-id-display-game-screen" style="display: none;">
+                Game ID: <span id="current-game-id-game-screen"></span>
+            </div>
         </div>
         
         <!-- Color Picker for Wild Cards -->
@@ -66,6 +69,16 @@
                 <button class="color-btn" data-color="yellow">Yellow</button>
             </div>
         </div>
+        
+        <!-- Connection Status Indicator -->
+        <div id="connection-status" style="position: fixed; bottom: 10px; right: 10px; font-size: 12px; color: green;">
+            Connected
+        </div>
+        
+        <!-- Game ID Display -->
+        <div id="game-id-corner" style="position: fixed; top: 10px; left: 10px; font-size: 14px; color: black; display: none;">
+            Game ID: <span id="current-game-id"></span>
+        </div>
     </div>
     
     <!-- Load animation.js with defer to ensure it loads after anime.js -->
@@ -75,13 +88,13 @@
         // WhatsApp sharing functionality
         document.getElementById('share-whatsapp').addEventListener('click', function() {
             const gameId = document.getElementById('game-id-display').textContent;
-            const gameUrl = "http://41.76.110.84:3000/";
-            const message = `Join my UNO game! Go to ${gameUrl} and enter Game ID: ${gameId}`;
+            const gameUrl = "https://boxgames.co.za/unoplay/?gameId=";
+            const message = `Join my UNO game! Go to ${gameUrl}${gameId}`;
             const encodedMessage = encodeURIComponent(message);
             const whatsappUrl = `https://wa.me/?text=${encodedMessage}`;
             window.open(whatsappUrl, '_blank');
         });
-
+        
         // Show/Hide Game Rules functionality
         document.getElementById('toggle-game-rules').addEventListener('click', function() {
             // Fallback if anime.js hasn't loaded yet
@@ -91,6 +104,121 @@
                 const gameRules = document.getElementById('game-rules');
                 gameRules.style.display = gameRules.style.display === "none" || gameRules.style.display === "" ? "block" : "none";
             }
+        });
+
+        // Keepalive functionality for mobile devices
+        (function setupKeepalive() {
+            // Reference to the connection status indicator
+            const connectionStatus = document.getElementById('connection-status');
+            let socket; 
+
+            // Initialize socket connection when it's available
+            const initSocketKeepalive = () => {
+                if (typeof io !== 'undefined') {
+                    // Get the socket instance from the game.js if possible
+                    // This assumes the socket is accessible globally or we create a new ping socket
+                    if (window.gameSocket) {
+                        socket = window.gameSocket;
+                    } else {
+                        // If no socket is available yet, try again later
+                        setTimeout(initSocketKeepalive, 1000);
+                        return;
+                    } 
+
+                    // Set up keepalive ping every 30 seconds
+                    const keepaliveInterval = setInterval(() => {
+                        if (socket && socket.connected) {
+                            socket.emit('keepalive');
+                            connectionStatus.textContent = 'Connected';
+                            connectionStatus.style.color = 'green';
+                        } else {
+                            connectionStatus.textContent = 'Disconnected';
+                            connectionStatus.style.color = 'red'; 
+
+                            // Try to reconnect if disconnected
+                            if (socket) {
+                                socket.connect();
+                            }
+                        }
+                    }, 30000); 
+
+                    // Set up event listeners for connection status
+                    socket.on('connect', () => {
+                        connectionStatus.textContent = 'Connected';
+                        connectionStatus.style.color = 'green';
+                    }); 
+
+                    socket.on('disconnect', () => {
+                        connectionStatus.textContent = 'Disconnected';
+                        connectionStatus.style.color = 'red';
+                    }); 
+
+                    // Also use the Page Visibility API to handle background tabs
+                    document.addEventListener('visibilitychange', () => {
+                        if (document.visibilityState === 'visible') {
+                            // When tab becomes visible again, force a ping
+                            if (socket && socket.connected) {
+                                socket.emit('keepalive');
+                            } else if (socket) {
+                                socket.connect();
+                            }
+                        }
+                    }); 
+
+                    // Handle mobile-specific events
+                    window.addEventListener('pagehide', () => {
+                        // Store timestamp when page is hidden
+                        localStorage.setItem('unoLastActive', Date.now());
+                    }); 
+
+                    window.addEventListener('pageshow', () => {
+                        const lastActive = parseInt(localStorage.getItem('unoLastActive') || '0');
+                        const now = Date.now(); 
+
+                        // If it's been more than 1 minute since last active, force reconnect
+                        if (now - lastActive > 60000) {
+                            if (socket) {
+                                socket.connect();
+                            }
+                        }
+                    });
+                } else {
+                    // If socket.io isn't loaded yet, try again in a second
+                    setTimeout(initSocketKeepalive, 1000);
+                }
+            }; 
+
+            // Start the keepalive initialization
+            initSocketKeepalive(); 
+
+            // Also set up a fallback HTTP keepalive for extreme cases
+            // This pings the server API endpoint every 2 minutes
+            setInterval(() => {
+                fetch('/.netlify/functions/server')
+                    .then(response => {
+                        if (response.ok) {
+                            console.log('HTTP keepalive successful');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('HTTP keepalive failed:', error);
+                    });
+            }, 120000);
+        })();
+
+        // Display Game ID when logged in
+        document.getElementById('create-game').addEventListener('click', function() {
+            const gameId = document.getElementById('game-id-display').textContent;
+            document.getElementById('current-game-id').textContent = gameId;
+            document.getElementById('current-game-id-game-screen').textContent = gameId;
+            document.getElementById('game-id-corner').style.display = 'block';
+            document.getElementById('game-id-display-game-screen').style.display = 'block';
+        });
+
+        // Load Game ID after page load
+        window.addEventListener('load', function() {
+            let gameId = new URLSearchParams(window.location.search).get('gameId');
+            document.getElementById('game-id').value = gameId;                
         });
     </script>
 </body>

@@ -2,6 +2,7 @@ const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
 const path = require('path');
+const serverless = require('serverless-http');
 
 const app = express();
 const server = http.createServer(app);
@@ -9,6 +10,16 @@ const io = socketIo(server);
 
 // Serve static files
 app.use(express.static(path.join(__dirname, 'public')));
+
+// Add API routes here that don't require WebSockets
+app.get('/.netlify/functions/server', (req, res) => {
+  res.json({ message: 'Uno Online API', status: 'ok', timestamp: new Date().toISOString() });
+});
+
+// Add a specific keepalive endpoint
+app.get('/.netlify/functions/server/keepalive', (req, res) => {
+  res.json({ status: 'alive', timestamp: new Date().toISOString() });
+});
 
 // Game state
 const games = {};
@@ -367,3 +378,6 @@ const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+
+// Export the serverless function
+module.exports.handler = serverless(app);

@@ -14,6 +14,7 @@ const playerHand = document.getElementById('player-hand');
 const discardPile = document.getElementById('discard-pile');
 const opponentsArea = document.getElementById('opponents-area');
 const gameStatus = document.getElementById('game-status');
+const currentGameIdDisplay = document.getElementById('current-game-id-game-screen'); // New element for displaying game ID
 
 // Game state
 let currentGameId = null;
@@ -215,16 +216,17 @@ function updateOpponents(players) {
 function showMessage(message) {
     gameStatus.innerText = message;
     
-    // Clear message after 3 seconds
+    // Clear message after 10 seconds
     setTimeout(() => {
         gameStatus.innerText = '';
-    }, 3000);
+    }, 10000);
 }
 
 // Socket event handlers
 socket.on('gameCreated', (gameId) => {
     currentGameId = gameId;
     gameIdDisplay.innerText = gameId;
+    currentGameIdDisplay.innerText = gameId; // Update the current game ID display
     
     // Update player list
     playerList.innerHTML = `<li>${myUsername} (You)</li>`;
