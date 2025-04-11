@@ -24,4 +24,3 @@
   [headers.values]
     Connection = "upgrade"
     Upgrade = "websocket"
-netlify deploy --debug
