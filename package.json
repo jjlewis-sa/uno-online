@@ -14,7 +14,7 @@
     "socket.io": "^4.8.1"
   },
   "devDependencies": {
-    "netlify-cli": "^19.1.5",
+    "netlify-cli": "^16.4.2",
     "serverless-http": "^3.2.0"
   }
 }
