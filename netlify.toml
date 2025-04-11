@@ -13,3 +13,6 @@
   [headers.values]
     Connection = "upgrade"
     Upgrade = "websocket"
+
+[build.environment]
+  NODE_VERSION = "22"
