@@ -108,6 +108,9 @@ function playCard(index) {
         gameId: currentGameId,
         cardIndex: index
     });
+    
+    // Animate card play
+    gameAnimations.animateCardPlay(card);
 }
 
 // Select color for wild card
@@ -227,8 +230,7 @@ socket.on('gameCreated', (gameId) => {
     playerList.innerHTML = `<li>${myUsername} (You)</li>`;
     
     // Show lobby screen
-    loginScreen.style.display = 'none';
-    lobbyScreen.style.display = 'block';
+    gameAnimations.animateScreenTransition(loginScreen, lobbyScreen);
 });
 
 socket.on('playerJoined', (data) => {
@@ -292,6 +294,7 @@ socket.on('selectColor', () => {
     // Only show color picker if we're not already handling a wild card
     // and not in the process of selecting a color
     if (pendingWildCard === null && !isSelectingColor) {
+        gameAnimations.animateColorPicker();
         colorPicker.style.display = 'block';
     }
 });

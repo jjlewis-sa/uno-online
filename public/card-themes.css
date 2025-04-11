@@ -1,0 +1,173 @@
+/* Anime-themed card backgrounds */
+.card {
+    position: relative;
+    overflow: hidden;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s ease;
+    will-change: transform, opacity;
+    background-size: cover;
+    background-position: center;
+}
+
+/* Card background patterns based on color */
+.card.red {
+    background: linear-gradient(135deg, #ff5555, #aa0000);
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><path d="M20,20 L80,20 L80,80 L20,80 Z" fill="none" stroke="%23ff7777" stroke-width="2" stroke-dasharray="5,5" /></svg>'), linear-gradient(135deg, #ff5555, #aa0000);
+}
+
+.card.blue {
+    background: linear-gradient(135deg, #5555ff, #0000aa);
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><circle cx="50" cy="50" r="30" fill="none" stroke="%237777ff" stroke-width="2" /></svg>'), linear-gradient(135deg, #5555ff, #0000aa);
+}
+
+.card.green {
+    background: linear-gradient(135deg, #55ff55, #00aa00);
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><polygon points="50,20 80,80 20,80" fill="none" stroke="%2377ff77" stroke-width="2" /></svg>'), linear-gradient(135deg, #55ff55, #00aa00);
+}
+
+.card.yellow {
+    background: linear-gradient(135deg, #ffff55, #aaaa00);
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><path d="M20,50 Q50,20 80,50 Q50,80 20,50" fill="none" stroke="%23ffff77" stroke-width="2" /></svg>'), linear-gradient(135deg, #ffff55, #aaaa00);
+}
+
+.card.wild {
+    background: linear-gradient(45deg, #ff5555 0%, #55ff55 25%, #5555ff 50%, #ffff55 75%, #ff5555 100%);
+    background-size: 400% 400%;
+    animation: wildCardGradient 3s ease infinite;
+}
+
+@keyframes wildCardGradient {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+/* Card content styling */
+.card-content {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+    font-weight: bold;
+    color: white;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+    font-family: 'Arial', sans-serif;
+}
+
+/* Card glow effects on hover */
+@media (hover: hover) {
+    .card:hover::before {
+        content: '';
+        position: absolute;
+        top: -5px;
+        left: -5px;
+        right: -5px;
+        bottom: -5px;
+        border-radius: 15px;
+        background: inherit;
+        filter: blur(10px);
+        opacity: 0.7;
+        z-index: -1;
+    }
+    
+    .card.red:hover::before { background: #ff5555; }
+    .card.blue:hover::before { background: #5555ff; }
+    .card.green:hover::before { background: #55ff55; }
+    .card.yellow:hover::before { background: #ffff55; }
+    .card.wild:hover::before { 
+        background: linear-gradient(45deg, #ff5555, #55ff55, #5555ff, #ffff55);
+        background-size: 400% 400%;
+        animation: wildCardGradient 3s ease infinite;
+    }
+}
+
+/* Special card designs */
+.card[data-value="skip"]::after,
+.card[data-value="reverse"]::after,
+.card[data-value="draw2"]::after,
+.card[data-value="wild"]::after,
+.card[data-value="wild4"]::after {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    background-size: 60% 60%;
+    background-position: center;
+    background-repeat: no-repeat;
+    opacity: 0.7;
+    mix-blend-mode: soft-light;
+}
+
+.card[data-value="skip"]::after {
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="none" stroke="white" stroke-width="5"/><line x1="25" y1="50" x2="75" y2="50" stroke="white" stroke-width="5"/><line x1="25" y1="50" x2="75" y2="50" stroke="white" stroke-width="5" transform="rotate(45 50 50)"/></svg>');
+}
+
+.card[data-value="reverse"]::after {
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M30,35 C45,20 65,20 80,35 L65,50 M70,65 C55,80 35,80 20,65 L35,50" fill="none" stroke="white" stroke-width="5"/></svg>');
+}
+
+.card[data-value="draw2"]::after {
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect x="30" y="30" width="30" height="40" rx="5" fill="none" stroke="white" stroke-width="3"/><rect x="40" y="40" width="30" height="40" rx="5" fill="none" stroke="white" stroke-width="3"/></svg>');
+}
+
+.card[data-value="wild"]::after,
+.card[data-value="wild4"]::after {
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="35" cy="35" r="15" fill="none" stroke="white" stroke-width="3"/><circle cx="65" cy="35" r="15" fill="none" stroke="white" stroke-width="3"/><circle cx="35" cy="65" r="15" fill="none" stroke="white" stroke-width="3"/><circle cx="65" cy="65" r="15" fill="none" stroke="white" stroke-width="3"/></svg>');
+}
+
+/* Anime-style card animations */
+.card.played {
+    animation: cardPlayedAnime 0.8s forwards;
+}
+
+@keyframes cardPlayedAnime {
+    0% { 
+        transform: scale(1) rotate(0deg);
+        opacity: 1;
+    }
+    20% {
+        transform: scale(1.2) rotate(5deg);
+        box-shadow: 0 15px 25px rgba(0, 0, 0, 0.4);
+    }
+    100% {
+        transform: scale(0.8) rotate(0deg);
+        opacity: 0;
+    }
+}
+
+/* Card flip animation */
+.card-flip {
+    perspective: 1000px;
+}
+
+.card-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transition: transform 0.6s;
+    transform-style: preserve-3d;
+}
+
+.card-flip.flipped .card-inner {
+    transform: rotateY(180deg);
+}
+
+.card-front, .card-back {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    border-radius: 10px;
+}
+
+.card-back {
+    transform: rotateY(180deg);
+    background: linear-gradient(135deg, #333, #111);
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><text x="50" y="50" font-family="Arial" font-size="20" text-anchor="middle" fill="%23555">UNO</text></svg>'), linear-gradient(135deg, #333, #111);
+}

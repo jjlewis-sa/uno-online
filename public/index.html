@@ -5,12 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Multiplayer UNO Game</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="animation.css">
+    <link rel="stylesheet" href="card-themes.css"> 
     <script src="/socket.io/socket.io.js"></script>
+    <!-- Load anime.js asynchronously -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" async defer></script>
 </head>
 <body>
     <div id="game-container">
         <h1>Multiplayer UNO Game</h1>
         
+        <!-- Game Rules Section -->
+        <div id="game-rules" style="display: none;">
+            <h2>Game Rules</h2>
+            <p>The objective of UNO is to be the first player to score 500 points. Points are scored by being the first to get rid of all your cards in each round and earning points for the cards remaining in your opponents' hands.</p>
+            <p>Players take turns drawing cards and playing cards from their hand that match the top card of the discard pile in color, number, or symbol. Special cards like Skip, Reverse, and Draw Two add twists to the game.</p>
+            <p>When a player has only one card left, they must yell "UNO!" If they forget and another player catches them before their next turn, they must draw two cards as a penalty.</p>
+        </div>
+        <button id="toggle-game-rules">Show/Hide Game Rules</button>        
         <!-- Login Screen -->
         <div id="login-screen">
             <input type="text" id="username" placeholder="Enter your username">
@@ -56,6 +68,8 @@
         </div>
     </div>
     
+    <!-- Load animation.js with defer to ensure it loads after anime.js -->
+    <script src="animation.js" defer></script>
     <script src="game.js"></script>
     <script>
         // WhatsApp sharing functionality
@@ -66,6 +80,17 @@
             const encodedMessage = encodeURIComponent(message);
             const whatsappUrl = `https://wa.me/?text=${encodedMessage}`;
             window.open(whatsappUrl, '_blank');
+        });
+
+        // Show/Hide Game Rules functionality
+        document.getElementById('toggle-game-rules').addEventListener('click', function() {
+            // Fallback if anime.js hasn't loaded yet
+            if (typeof toggleGameRules === 'function') {
+                toggleGameRules();
+            } else {
+                const gameRules = document.getElementById('game-rules');
+                gameRules.style.display = gameRules.style.display === "none" || gameRules.style.display === "" ? "block" : "none";
+            }
         });
     </script>
 </body>
