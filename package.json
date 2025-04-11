@@ -4,9 +4,10 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-  "start": "node server.js",
-  "build": "mkdir -p functions && cp -r public .",
-  "dev": "netlify dev"
+  "start": "node index.js",
+  "build": "echo 'No build step required - static files are in public directory'",
+  "dev": "netlify dev",
+  "clean-install": "rm -rf node_modules && npm install"
   },
   "keywords": [
     "uno",

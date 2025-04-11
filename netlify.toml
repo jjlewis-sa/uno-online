@@ -1,7 +1,6 @@
 [build]
-  command = "npm run build" # Or whatever your build command is
-  functions = "functions"
-  publish = "public" # Set this to your build output directory
+  command = "npm run clean-install && npm run build"
+  publish = "public"
 
 [[redirects]]
   from = "/*"
