@@ -4,16 +4,21 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node index.js",
-    "build": "echo 'No build step required - static files are in public directory'",
-    "dev": "netlify dev"
+  "start": "node server.js",
+  "build": "mkdir -p functions && cp -r public .",
+  "dev": "netlify dev"
   },
-  "keywords": ["uno", "card game", "multiplayer", "online game"],
+  "keywords": [
+    "uno",
+    "card game",
+    "multiplayer",
+    "online game"
+  ],
   "author": "",
   "license": "ISC",
   "description": "An online multiplayer UNO card game",
   "dependencies": {
-    "express": "^5.1.0",
+    "express": "^4.18.2",
     "socket.io": "^4.8.1"
   },
   "devDependencies": {
