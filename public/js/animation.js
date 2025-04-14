@@ -293,24 +293,56 @@ function animateCardFlip(cardElement) {
 }
 
 // Export functions to be used in game.js
-window.gameAnimations = {
+const gameAnimations = {
     animateCardPlay: function(card) {
-        console.log('Trying to animate card:', card);
-        console.log('Looking for element with ID:', 'the-id-you-are-using');
+        // Create a card element for animation
+        const playerHand = document.getElementById('player-hand');
+        const discardPile = document.getElementById('discard-pile');
         
-        const element = document.getElementById('the-id-you-are-using');
-        console.log('Element found:', element);
-        
-        if (element && element.classList) {
-            element.classList.add('some-class');
-        } else {
-            console.warn('Element not found for card animation', card);
+        if (!playerHand || !discardPile) {
+            console.warn('Required elements not found for animation');
+            return;
         }
+        
+        // Create a clone of the card for animation
+        const cardElement = document.createElement('div');
+        cardElement.className = `card ${card.color}`;
+        cardElement.innerHTML = `<span>${card.value}</span>`;
+        cardElement.style.position = 'absolute';
+        cardElement.style.zIndex = '1000';
+        
+        // Get positions
+        const handRect = playerHand.getBoundingClientRect();
+        const discardRect = discardPile.getBoundingClientRect();
+        
+        // Set initial position
+        cardElement.style.top = `${handRect.top}px`;
+        cardElement.style.left = `${handRect.left}px`;
+        
+        // Add to body
+        document.body.appendChild(cardElement);
+        
+        // Use anime.js for animation
+        anime({
+            targets: cardElement,
+            top: discardRect.top,
+            left: discardRect.left,
+            scale: [1, 0.8],
+            opacity: [1, 0.8],
+            duration: 800,
+            easing: 'easeOutQuad',
+            complete: function() {
+                cardElement.remove();
+            }
+        });
     },
     animateScreenTransition,
     animateColorPicker,
     initCardAnimations
 };
+
+// Make animations available globally
+window.gameAnimations = gameAnimations;
 
 // Anime-style card animations
 function initCardAnimations() {

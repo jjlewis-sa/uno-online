@@ -250,13 +250,32 @@ io.on('connection', (socket) => {
 
   // Audio chat signaling
   socket.on('audio-signal', (data) => {
-    // Forward the signal to the specific recipient or room
+    // Forward the signal to the specific recipient
     if (data.gameId) {
-      socket.to(data.gameId).emit('audio-signal', {
-        signal: data.signal,
-        from: socket.id,
-        username: data.username
-      });
+      // If there's a specific recipient
+      if (data.userToSignal) {
+        io.to(data.userToSignal).emit('audio-signal', {
+          signal: data.signal,
+          from: socket.id,
+          username: data.username
+        });
+      } 
+      // If responding to a specific caller
+      else if (data.to) {
+        io.to(data.to).emit('audio-signal', {
+          signal: data.signal,
+          from: socket.id,
+          username: data.username
+        });
+      }
+      // Otherwise broadcast to the room
+      else {
+        socket.to(data.gameId).emit('audio-signal', {
+          signal: data.signal,
+          from: socket.id,
+          username: data.username
+        });
+      }
     }
   });
 
