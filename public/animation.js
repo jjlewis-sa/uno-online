@@ -294,7 +294,19 @@ function animateCardFlip(cardElement) {
 
 // Export functions to be used in game.js
 window.gameAnimations = {
-    animateCardPlay,
+    animateCardPlay: function(card) {
+        console.log('Trying to animate card:', card);
+        console.log('Looking for element with ID:', 'the-id-you-are-using');
+        
+        const element = document.getElementById('the-id-you-are-using');
+        console.log('Element found:', element);
+        
+        if (element && element.classList) {
+            element.classList.add('some-class');
+        } else {
+            console.warn('Element not found for card animation', card);
+        }
+    },
     animateScreenTransition,
     animateColorPicker,
     initCardAnimations

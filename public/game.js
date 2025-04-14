@@ -30,6 +30,15 @@ document.getElementById('create-game').addEventListener('click', createGame);
 document.getElementById('join-game').addEventListener('click', joinGame);
 document.getElementById('start-game').addEventListener('click', startGame);
 document.getElementById('draw-card').addEventListener('click', drawCard);
+const toggleAudioBtn = document.getElementById('toggle-audio');
+if (toggleAudioBtn) {
+  toggleAudioBtn.addEventListener('click', toggleAudio);
+}
+
+const leaveAudioChatBtn = document.getElementById('leave-audio-chat');
+if (leaveAudioChatBtn) {
+  leaveAudioChatBtn.addEventListener('click', leaveAudioChat);
+}
 
 // Color picker buttons
 document.querySelectorAll('.color-btn').forEach(button => {
@@ -96,7 +105,6 @@ function playCard(index) {
         // For draw four cards, we need to include the color in the playCard event
         if (card.value === 'draw four') {
             colorPicker.style.display = 'block';
-            // We'll handle this in selectWildCardColor
         } else {
             // For regular wild cards, just show the color picker
             colorPicker.style.display = 'block';
@@ -110,8 +118,39 @@ function playCard(index) {
         cardIndex: index
     });
     
-    // Animate card play
-    gameAnimations.animateCardPlay(card);
+    // Simple animation without relying on gameAnimations
+    const cardElement = document.querySelector(`#player-hand .card:nth-child(${index + 1})`);
+    if (cardElement) {
+        // Create a clone for animation
+        const clone = cardElement.cloneNode(true);
+        clone.style.position = 'absolute';
+        clone.style.zIndex = '1000';
+        
+        // Get positions
+        const rect = cardElement.getBoundingClientRect();
+        const discardRect = document.getElementById('discard-pile').getBoundingClientRect();
+        
+        // Set initial position
+        clone.style.top = `${rect.top}px`;
+        clone.style.left = `${rect.left}px`;
+        clone.style.width = `${rect.width}px`;
+        clone.style.height = `${rect.height}px`;
+        
+        // Add to body
+        document.body.appendChild(clone);
+        
+        // Animate
+        setTimeout(() => {
+            clone.style.transition = 'all 0.5s ease-in-out';
+            clone.style.top = `${discardRect.top}px`;
+            clone.style.left = `${discardRect.left}px`;
+        }, 10);
+        
+        // Remove after animation
+        setTimeout(() => {
+            clone.remove();
+        }, 600);
+    }
 }
 
 // Select color for wild card
@@ -343,3 +382,52 @@ socket.on('playerLeft', (data) => {
 socket.on('error', (message) => {
     showMessage(message);
 });
+// Create audio control buttons dynamically
+function toggleAudio() {
+  if (window.localStream) {
+    const audioTrack = window.localStream.getAudioTracks()[0];
+    if (audioTrack) {
+      audioTrack.enabled = !audioTrack.enabled;
+      document.getElementById('toggle-audio').textContent =
+        audioTrack.enabled ? 'Mute' : 'Unmute';
+    }
+  }
+}
+
+function createAudioControls() {
+    const gameScreen = document.getElementById('game-screen');
+    
+    // Create container
+    const audioControls = document.createElement('div');
+    audioControls.className = 'audio-controls';
+    
+    // Create toggle button
+    const toggleBtn = document.createElement('button');
+    toggleBtn.id = 'toggle-audio';
+    toggleBtn.className = 'btn';
+    toggleBtn.textContent = 'Mute';
+    toggleBtn.addEventListener('click', toggleAudio);
+    
+    // Create leave button
+    const leaveBtn = document.createElement('button');
+    leaveBtn.id = 'leave-audio-chat';
+    leaveBtn.className = 'btn';
+    leaveBtn.textContent = 'Leave Audio Chat';
+    leaveBtn.addEventListener('click', leaveAudioChat);
+    
+    // Add buttons to container
+    audioControls.appendChild(toggleBtn);
+    audioControls.appendChild(leaveBtn);
+    
+    // Add container to game screen
+    gameScreen.appendChild(audioControls);
+  }
+  
+  // Call this function when the game starts
+  socket.on('gameStarted', (data) => {
+    // Your existing gameStarted code...
+    
+    // Create audio controls
+    createAudioControls();
+  });
+  

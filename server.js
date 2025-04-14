@@ -11,15 +11,6 @@ const io = socketIo(server);
 // Serve static files
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Add API routes here that don't require WebSockets
-app.get('/.netlify/functions/server', (req, res) => {
-  res.json({ message: 'Uno Online API', status: 'ok', timestamp: new Date().toISOString() });
-});
-
-// Add a specific keepalive endpoint
-app.get('/.netlify/functions/server/keepalive', (req, res) => {
-  res.json({ status: 'alive', timestamp: new Date().toISOString() });
-});
 
 // Game state
 const games = {};
@@ -255,6 +246,25 @@ io.on('connection', (socket) => {
         }
       }
     }
+  });
+
+  // Audio chat signaling
+  socket.on('audio-signal', (data) => {
+    // Forward the signal to the specific recipient or room
+    if (data.gameId) {
+      socket.to(data.gameId).emit('audio-signal', {
+        signal: data.signal,
+        from: socket.id,
+        username: data.username
+      });
+    }
+  });
+
+  socket.on('request-audio-connect', (data) => {
+    socket.to(data.gameId).emit('user-joined-audio', {
+      userId: socket.id,
+      username: data.username
+    });
   });
 });
 

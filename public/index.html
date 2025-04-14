@@ -83,7 +83,8 @@
     
     <!-- Load animation.js with defer to ensure it loads after anime.js -->
     <script src="animation.js" defer></script>
-    <script src="game.js"></script>
+    <script src="/audioChat.js"></script>
+    <script src="/game.js"></script>
     <script>
         // WhatsApp sharing functionality
         document.getElementById('share-whatsapp').addEventListener('click', function() {
@@ -191,19 +192,7 @@
             // Start the keepalive initialization
             initSocketKeepalive(); 
 
-            // Also set up a fallback HTTP keepalive for extreme cases
-            // This pings the server API endpoint every 2 minutes
-            setInterval(() => {
-                fetch('/.netlify/functions/server')
-                    .then(response => {
-                        if (response.ok) {
-                            console.log('HTTP keepalive successful');
-                        }
-                    })
-                    .catch(error => {
-                        console.error('HTTP keepalive failed:', error);
-                    });
-            }, 120000);
+            
         })();
 
         // Display Game ID when logged in
