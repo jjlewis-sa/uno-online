@@ -5,116 +5,17 @@ const socket = io(window.location.origin, {
   transports: ['websocket', 'polling']
 });
 
-// Add these variables to your existing globals
-let reconnectAttempted = false;
-let lastGameId = null;
-
-// Add this function to handle reconnection
-function attemptReconnect() {
-  // Try to get the last game ID from localStorage
-  const storedGameId = localStorage.getItem('unoGameId');
-  const storedUsername = localStorage.getItem('unoUsername');
-  
-  if (storedGameId && storedUsername && !reconnectAttempted) {
-    reconnectAttempted = true;
-    lastGameId = storedGameId;
-    
-    // Show reconnection dialog
-    const reconnectConfirm = confirm(`Would you like to reconnect to your previous game (${storedGameId}) as ${storedUsername}?`);
-    
-    if (reconnectConfirm) {
-      // Set the username input
-      usernameInput.value = storedUsername;
-      
-      // Emit reconnection attempt
-      socket.emit('attemptReconnect', {
-        gameId: storedGameId,
-        username: storedUsername
-      });
-      
-      // Show loading indicator
-      gameStatus.textContent = 'Attempting to reconnect...';
-      
-      // Switch to lobby screen while we wait
-      showScreen('lobby-screen');
-      gameIdDisplay.textContent = storedGameId;
-    } else {
-      // Clear stored game data if user declines reconnection
-      localStorage.removeItem('unoGameId');
-      localStorage.removeItem('unoUsername');
-    }
-  }
-}
-
-// Add event listeners for reconnection events
-socket.on('gameReconnected', (gameState) => {
-  // Update game state with received data
-  myHand = gameState.hand;
-  isMyTurn = gameState.isMyTurn;
-  currentGameId = lastGameId;
-  
-  // Store game info in localStorage for future reconnects
-  localStorage.setItem('unoGameId', currentGameId);
-  localStorage.setItem('unoUsername', myUsername);
-  
-  // Update UI
-  showScreen('game-screen');
-  currentGameIdDisplay.textContent = currentGameId;
-  
-  // Render the game state
-  renderHand();
-  renderDiscardPile(gameState.currentCard, gameState.currentColor);
-  renderOpponents(gameState.players);
-  
-  // Update game status
-  if (isMyTurn) {
-    gameStatus.textContent = 'Your turn!';
-  } else {
-    gameStatus.textContent = `Waiting for ${gameState.currentPlayer} to play`;
-  }
-  
-  // Notify user
-  alert('Successfully reconnected to the game!');
+// Add connection event handlers
+socket.on('connect', () => {
+  console.log('Connected to server with ID:', socket.id);
 });
 
-socket.on('reconnectFailed', (data) => {
-  alert(`Reconnection failed: ${data.reason}`);
-  
-  // If they can join as a new player, offer that option
-  if (data.canJoinAsNew) {
-    const joinAsNew = confirm('Would you like to join this game as a new player instead?');
-    if (joinAsNew) {
-      gameIdInput.value = lastGameId;
-      joinGame();
-    }
-  }
-  
-  // Clear stored game data
-  localStorage.removeItem('unoGameId');
-  localStorage.removeItem('unoUsername');
-  
-  // Return to login screen
-  showScreen('login-screen');
+socket.on('connect_error', (error) => {
+  console.error('Connection error:', error);
 });
 
-socket.on('playerDisconnected', (data) => {
-  // Update the player list to show who's disconnected
-  renderOpponents(data.players);
-  
-  // Show notification
-  gameStatus.textContent = `${data.username} disconnected. Waiting for reconnection...`;
-});
-
-socket.on('playerReconnected', (data) => {
-  // Update the player list
-  renderOpponents(data.players);
-  
-  // Show notification
-  gameStatus.textContent = `${data.username} reconnected!`;
-});
-
-socket.on('turnSkipped', (data) => {
-  gameStatus.textContent = `${data.skippedPlayer}'s turn was skipped. It's now ${data.nextPlayer}'s turn.`;
+socket.on('disconnect', (reason) => {
+  console.log('Disconnected:', reason);
 });
 
 // Global variables for audio chat
@@ -329,24 +230,6 @@ function updateDiscardPile(card) {
     discardPile.appendChild(cardElement);
 }
 
-// Update opponents display
-function updateOpponents(players) {
-    opponentsArea.innerHTML = '';
-    
-    players.forEach(player => {
-        if (player.username !== myUsername) {
-            const opponentElement = document.createElement('div');
-            opponentElement.className = 'opponent';
-            opponentElement.innerHTML = `
-                <div class="opponent-name">${player.username}</div>
-                <div class="opponent-cards">${player.cardCount} cards</div>
-            `;
-            
-            opponentsArea.appendChild(opponentElement);
-        }
-    });
-}
-
 // Show a message in the game status area
 function showMessage(message) {
     gameStatus.innerText = message;
@@ -354,7 +237,7 @@ function showMessage(message) {
     // Clear message after 10 seconds
     setTimeout(() => {
         gameStatus.innerText = '';
-    }, 10000);
+    }, 100000);
 }
 
 // Socket event handlers
@@ -418,8 +301,6 @@ socket.on('updateGame', (data) => {
     // Update discard pile
     updateDiscardPile(data.currentCard);
     
-    // Update opponents
-    updateOpponents(data.players);
     
     // Check if it's my turn
     isMyTurn = data.currentPlayer === myUsername;
@@ -828,39 +709,3 @@ function endGame() {
         toggleAudio(socket, gameId, username);
     }
 }
-
-// Add a helper function to show different screens
-function showScreen(screenId) {
-  // Hide all screens
-  loginScreen.style.display = 'none';
-  lobbyScreen.style.display = 'none';
-  gameScreen.style.display = 'none';
-  
-  // Show the requested screen
-  document.getElementById(screenId).style.display = 'block';
-}
-
-// Call attemptReconnect when the page loads
-document.addEventListener('DOMContentLoaded', () => {
-  attemptReconnect();
-});
-
-// Add this to your client-side JS
-const connectionStatus = document.getElementById('connection-status');
-
-socket.on('connect', () => {
-  connectionStatus.textContent = 'Connected';
-  connectionStatus.className = 'connection-status connected';
-  // Rest of connect handler...
-});
-
-socket.on('disconnect', () => {
-  connectionStatus.textContent = 'Disconnected';
-  connectionStatus.className = 'connection-status disconnected';
-  // Rest of disconnect handler...
-});
-
-socket.on('reconnecting', (attemptNumber) => {
-  connectionStatus.textContent = `Reconnecting (${attemptNumber})...`;
-  connectionStatus.className = 'connection-status reconnecting';
-});

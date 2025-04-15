@@ -19,9 +19,9 @@ const io = socketIo(server, {
 app.use(express.static(path.join(__dirname, 'public')));
 
 
+
 // Game state with better error handling
 const games = {};
-const disconnectedPlayers = {};
 
 function generateGameId() {
   // More robust game ID generation
@@ -33,8 +33,22 @@ function generateGameId() {
 io.on('connection', (socket) => {
   console.log('New client connected:', socket.id);
   
+
   // Create a new game with better error handling
   socket.on('createGame', (username) => {
+
+
+
+
+
+
+
+
+
+
+
+
+
     try {
       const gameId = generateGameId();
       games[gameId] = {
@@ -56,8 +70,14 @@ io.on('connection', (socket) => {
     }
   });
   
+
   // Join with better error handling
   socket.on('joinGame', (data) => {
+
+
+
+
+
     try {
       const { gameId, username } = data;
       
@@ -77,6 +97,13 @@ io.on('connection', (socket) => {
       console.error('Error joining game:', error);
       socket.emit('error', 'Failed to join game');
     }
+
+
+
+
+
+
+
   });
   
   // Start the game
@@ -245,173 +272,32 @@ io.on('connection', (socket) => {
     updateGameState(gameId);
   });
   
-  // Handle player reconnection attempts
-  socket.on('attemptReconnect', (data) => {
-    const { username, gameId } = data;
-    
-    // Check if the game exists
-    if (!games[gameId]) {
-      socket.emit('reconnectFailed', { reason: 'Game no longer exists' });
-      return;
-    }
-    
-    // Check if this player was previously in this game
-    const disconnectedPlayerData = disconnectedPlayers[gameId] && 
-                                  disconnectedPlayers[gameId].find(p => p.username === username);
-    
-    if (!disconnectedPlayerData) {
-      // Check if username is already taken in the active game
-      const existingPlayer = games[gameId].players.find(p => p.username === username);
-      if (existingPlayer) {
-        socket.emit('reconnectFailed', { reason: 'Username already in use in this game' });
-      } else {
-        // Allow joining as a new player if game hasn't started
-        socket.emit('reconnectFailed', { 
-          reason: 'You were not previously in this game',
-          canJoinAsNew: games[gameId].discardPile.length === 0 // Game hasn't started
-        });
-      }
-      return;
-    }
-    
-    // Remove from disconnected players list
-    disconnectedPlayers[gameId] = disconnectedPlayers[gameId].filter(p => p.username !== username);
-    if (disconnectedPlayers[gameId].length === 0) {
-      delete disconnectedPlayers[gameId];
-    }
-    
-    // Update the player's socket ID in the game
-    const playerIndex = games[gameId].players.findIndex(p => p.username === username);
-    
-    if (playerIndex !== -1) {
-      // Player is still in the game (we kept their spot)
-      games[gameId].players[playerIndex].id = socket.id;
-      socket.join(gameId);
-      
-      // Send the current game state to the reconnected player
-      const topCard = games[gameId].discardPile[games[gameId].discardPile.length - 1];
-      const currentColor = topCard ? (topCard.selectedColor || topCard.color) : null;
-      
-      socket.emit('gameReconnected', {
-        hand: games[gameId].players[playerIndex].hand,
-        currentCard: topCard,
-        currentColor: currentColor,
-        currentPlayer: games[gameId].players[games[gameId].currentPlayer].username,
-        players: games[gameId].players.map(p => ({
-          username: p.username,
-          cardCount: p.hand.length
-        })),
-        isMyTurn: playerIndex === games[gameId].currentPlayer
-      });
-      
-      // Notify other players
-      socket.to(gameId).emit('playerReconnected', {
-        username: username,
-        players: games[gameId].players.map(p => ({
-          username: p.username,
-          cardCount: p.hand.length
-        }))
-      });
-      
-      console.log(`Player ${username} reconnected to game ${gameId}`);
-    } else {
-      // This shouldn't happen if we're managing disconnects properly
-      socket.emit('reconnectFailed', { reason: 'Player no longer in game' });
-    }
-  });
-  
   // Disconnect
   socket.on('disconnect', () => {
     console.log('Client disconnected:', socket.id);
     
-    // Find which game this player was in
+    // Remove player from any games they're in
     for (const gameId in games) {
       const game = games[gameId];
       const playerIndex = game.players.findIndex(p => p.id === socket.id);
       
       if (playerIndex !== -1) {
-        const playerData = game.players[playerIndex];
+        game.players.splice(playerIndex, 1);
         
-        // Store the disconnected player's data
-        if (!disconnectedPlayers[gameId]) {
-          disconnectedPlayers[gameId] = [];
-        }
-        
-        disconnectedPlayers[gameId].push({
-          username: playerData.username,
-          hand: playerData.hand,
-          disconnectedAt: Date.now()
-        });
-        
-        // Don't remove the player from the game immediately
-        // Instead, notify other players about the disconnection
-        io.to(gameId).emit('playerDisconnected', {
-          username: playerData.username,
-          players: game.players.map(p => ({
-            username: p.username,
-            cardCount: p.hand.length,
-            connected: p.id !== socket.id
-          }))
-        });
-        
-        // If it was this player's turn, automatically skip after a timeout
-        if (playerIndex === game.currentPlayer) {
-          setTimeout(() => {
-            // Check if the player is still disconnected
-            const stillDisconnected = game.players[playerIndex].id === socket.id;
-            if (stillDisconnected && games[gameId]) {
-              // Move to the next player
-              game.currentPlayer = (game.currentPlayer + game.direction) % game.players.length;
-              if (game.currentPlayer < 0) game.currentPlayer += game.players.length;
-              
-              // Update game state for all players
-              updateGameState(gameId);
-              
-              io.to(gameId).emit('turnSkipped', {
-                skippedPlayer: playerData.username,
-                nextPlayer: game.players[game.currentPlayer].username
-              });
-            }
-          }, 30000); // 30 seconds timeout
-        }
-        
-        // Set up a cleanup timeout (e.g., 10 minutes)
-        setTimeout(() => {
-          // If the game still exists and the player hasn't reconnected
-          if (games[gameId] && games[gameId].players.findIndex(p => p.id === socket.id) !== -1) {
-            // Now remove the player
-            games[gameId].players.splice(playerIndex, 1);
-            
-            if (games[gameId].players.length === 0) {
-              // If no players left, delete the game
-              delete games[gameId];
-              
-              // Also clean up disconnected players data
-              delete disconnectedPlayers[gameId];
-            } else {
-              // Adjust current player if needed
-              if (playerIndex < games[gameId].currentPlayer) {
-                games[gameId].currentPlayer--;
-              } else if (playerIndex === games[gameId].currentPlayer) {
-                games[gameId].currentPlayer %= games[gameId].players.length;
-              }
-              
-              // Notify remaining players
-              io.to(gameId).emit('playerLeft', {
-                username: playerData.username,
-                players: games[gameId].players.map(p => ({
-                  username: p.username,
-                  cardCount: p.hand.length
-                }))
-              });
-              
-              // Update game state
-              updateGameState(gameId);
-            }
+        if (game.players.length === 0) {
+          delete games[gameId];
+        } else {
+          // Adjust current player if needed
+          if (playerIndex < game.currentPlayer) {
+            game.currentPlayer--;
+          } else if (playerIndex === game.currentPlayer) {
+            game.currentPlayer %= game.players.length;
           }
-        }, 600000); // 10 minutes timeout
-        
-        break; // Player found, no need to check other games
+          
+          io.to(gameId).emit('playerLeft', {
+            players: game.players.map(p => p.username)
+          });
+        }
       }
     }
   });
