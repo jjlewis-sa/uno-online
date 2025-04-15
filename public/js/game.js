@@ -327,8 +327,18 @@ socket.on('updateGame', (data) => {
     
     if (isMyTurn) {
         showMessage('Your turn!');
+        
+                // Play turn notification sound
+                const turnSound = new Audio('../audio/mixkit-long-pop-2358.wav');
+                turnSound.volume = 0.5; // Set to 50% volume
+                turnSound.play();
+        
     } else {
         showMessage(`${data.currentPlayer}'s turn`);
+                // Play turn notification sound
+                const turnSound = new Audio('../audio/mixkit-long-pop-2358.wav');
+                turnSound.volume = 0.5; // Set to 50% volume
+                turnSound.play();
     }
 });
 
@@ -371,6 +381,7 @@ socket.on('gameOver', (data) => {
     
     // Clean up audio
     leaveAudioChat();
+    location.reload();
 });
 
 socket.on('playerLeft', (data) => {
