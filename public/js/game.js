@@ -1,5 +1,22 @@
-// Connect to the server
-const socket = io();
+// Connect to the server with explicit URL in production
+const socket = io(window.location.origin, {
+  reconnectionAttempts: 5,
+  timeout: 10000,
+  transports: ['websocket', 'polling']
+});
+
+// Add connection event handlers
+socket.on('connect', () => {
+  console.log('Connected to server with ID:', socket.id);
+});
+
+socket.on('connect_error', (error) => {
+  console.error('Connection error:', error);
+});
+
+socket.on('disconnect', (reason) => {
+  console.log('Disconnected:', reason);
+});
 
 // Global variables for audio chat
 //let localStream = null;
@@ -56,30 +73,36 @@ document.querySelectorAll('.color-btn').forEach(button => {
     });
 });
 
-// Create a new game
+// Add better error handling
+socket.on('error', (errorMsg) => {
+  console.error('Game error:', errorMsg);
+  alert(`Game error: ${errorMsg}`);
+});
+
+// Improve game creation function
 function createGame() {
-    myUsername = usernameInput.value.trim();
-    
-    if (!myUsername) {
-        alert('Please enter a username');
-        return;
-    }
-    
-    socket.emit('createGame', myUsername);
+  const username = usernameInput.value.trim();
+  if (!username) {
+    alert('Please enter a username');
+    return;
+  }
+  
+  console.log('Attempting to create game as:', username);
+  socket.emit('createGame', username);
 }
 
-// Join an existing game
+// Improve join game function
 function joinGame() {
-    myUsername = usernameInput.value.trim();
-    const gameId = gameIdInput.value.trim();
-    
-    if (!myUsername || !gameId) {
-        alert('Please enter both username and game ID');
-        return;
-    }
-    
-    currentGameId = gameId;
-    socket.emit('joinGame', { gameId, username: myUsername });
+  const username = usernameInput.value.trim();
+  const gameId = gameIdInput.value.trim().toUpperCase();
+  
+  if (!username || !gameId) {
+    alert('Please enter both username and game ID');
+    return;
+  }
+  
+  console.log(`Attempting to join game ${gameId} as ${username}`);
+  socket.emit('joinGame', { gameId, username });
 }
 
 // Start the game

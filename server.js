@@ -6,50 +6,76 @@ const serverless = require('serverless-http');
 
 const app = express();
 const server = http.createServer(app);
-const io = socketIo(server);
+const io = socketIo(server, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"],
+    allowedHeaders: ["my-custom-header"],
+    credentials: true
+  }
+});
 
 // Serve static files
 app.use(express.static(path.join(__dirname, 'public')));
 
 
-// Game state
+// Game state with better error handling
 const games = {};
+
+function generateGameId() {
+  // More robust game ID generation
+  const id = Math.random().toString(36).substring(2, 8).toUpperCase();
+  // Ensure uniqueness
+  return games[id] ? generateGameId() : id;
+}
 
 io.on('connection', (socket) => {
   console.log('New client connected:', socket.id);
   
-  // Create a new game
+  // Create a new game with better error handling
   socket.on('createGame', (username) => {
-    const gameId = generateGameId();
-    games[gameId] = {
-      id: gameId,
-      players: [{id: socket.id, username, hand: []}],
-      deck: createDeck(),
-      currentPlayer: 0,
-      direction: 1,
-      discardPile: []
-    };
-    
-    shuffleDeck(games[gameId].deck);
-    socket.join(gameId);
-    socket.emit('gameCreated', gameId);
+    try {
+      const gameId = generateGameId();
+      games[gameId] = {
+        id: gameId,
+        players: [{id: socket.id, username, hand: []}],
+        deck: createDeck(),
+        currentPlayer: 0,
+        direction: 1,
+        discardPile: []
+      };
+      
+      shuffleDeck(games[gameId].deck);
+      socket.join(gameId);
+      socket.emit('gameCreated', gameId);
+      console.log(`Game created: ${gameId} by ${username}`);
+    } catch (error) {
+      console.error('Error creating game:', error);
+      socket.emit('error', 'Failed to create game');
+    }
   });
   
-  // Join an existing game
+  // Join with better error handling
   socket.on('joinGame', (data) => {
-    const { gameId, username } = data;
-    
-    if (!games[gameId]) {
-      socket.emit('error', 'Game not found');
-      return;
+    try {
+      const { gameId, username } = data;
+      
+      if (!games[gameId]) {
+        socket.emit('error', 'Game not found');
+        return;
+      }
+      
+      games[gameId].players.push({id: socket.id, username, hand: []});
+      socket.join(gameId);
+      
+      io.to(gameId).emit('playerJoined', {
+        players: games[gameId].players.map(p => p.username)
+      });
+      console.log(`Player ${username} joined game: ${gameId}`);
+    } catch (error) {
+      console.error('Error joining game:', error);
+      socket.emit('error', 'Failed to join game');
     }
-    
-    games[gameId].players.push({id: socket.id, username, hand: []});
-    socket.join(gameId);
-    
-    io.to(gameId).emit('playerJoined', {
-      players: games[gameId].players.map(p => p.username)
-    });
   });
   
   // Start the game
