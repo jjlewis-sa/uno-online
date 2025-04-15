@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="animation.css">
     <link rel="stylesheet" href="card-themes.css"> 
     <script src="/socket.io/socket.io.js"></script>
+    <script src="js/sleep.js" async></script>
     <!-- Load anime.js asynchronously -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" async defer></script>
 </head>
@@ -91,8 +92,9 @@
     <script src="https://cdn.jsdelivr.net/npm/simple-peer@9.11.0/simplepeer.min.js"></script>
     <script src="js/audioChat.js"></script>
     <script src="js/game.js"></script>
-    <script src="js/nosleep.js"></script>
+    <script src="js/sleep.js" async></script>
     <script>
+        sleep.prevent();
         // WhatsApp sharing functionality
         document.getElementById('share-whatsapp').addEventListener('click', function() {
             const gameId = document.getElementById('game-id-display').textContent;
