@@ -94,7 +94,9 @@
     <script src="js/game.js"></script>
     <script src="js/sleep.js" async></script>
     <script>
-        sleep.prevent();
+            document.addEventListener('click', () => {
+                sleep.prevent();
+            });
         // WhatsApp sharing functionality
         document.getElementById('share-whatsapp').addEventListener('click', function() {
             const gameId = document.getElementById('game-id-display').textContent;
