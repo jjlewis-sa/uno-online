@@ -73,36 +73,30 @@ document.querySelectorAll('.color-btn').forEach(button => {
     });
 });
 
-// Add better error handling
-socket.on('error', (errorMsg) => {
-  console.error('Game error:', errorMsg);
-  alert(`Game error: ${errorMsg}`);
-});
-
-// Improve game creation function
+// Create a new game
 function createGame() {
-  const username = usernameInput.value.trim();
-  if (!username) {
-    alert('Please enter a username');
-    return;
-  }
-  
-  console.log('Attempting to create game as:', username);
-  socket.emit('createGame', username);
+    myUsername = usernameInput.value.trim();
+    
+    if (!myUsername) {
+        alert('Please enter a username');
+        return;
+    }
+    
+    socket.emit('createGame', myUsername);
 }
 
-// Improve join game function
+// Join an existing game
 function joinGame() {
-  const username = usernameInput.value.trim();
-  const gameId = gameIdInput.value.trim().toUpperCase();
-  
-  if (!username || !gameId) {
-    alert('Please enter both username and game ID');
-    return;
-  }
-  
-  console.log(`Attempting to join game ${gameId} as ${username}`);
-  socket.emit('joinGame', { gameId, username });
+    myUsername = usernameInput.value.trim();
+    const gameId = gameIdInput.value.trim();
+    
+    if (!myUsername || !gameId) {
+        alert('Please enter both username and game ID');
+        return;
+    }
+    
+    currentGameId = gameId;
+    socket.emit('joinGame', { gameId, username: myUsername });
 }
 
 // Start the game
