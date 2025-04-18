@@ -18,8 +18,6 @@ const io = socketIo(server, {
 // Serve static files
 app.use(express.static(path.join(__dirname, 'public')));
 
-
-
 // Game state with better error handling
 const games = {};
 
@@ -32,23 +30,9 @@ function generateGameId() {
 
 io.on('connection', (socket) => {
   console.log('New client connected:', socket.id);
-  
 
   // Create a new game with better error handling
   socket.on('createGame', (username) => {
-
-
-
-
-
-
-
-
-
-
-
-
-
     try {
       const gameId = generateGameId();
       games[gameId] = {
@@ -69,15 +53,9 @@ io.on('connection', (socket) => {
       socket.emit('error', 'Failed to create game');
     }
   });
-  
 
   // Join with better error handling
   socket.on('joinGame', (data) => {
-
-
-
-
-
     try {
       const { gameId, username } = data;
       
@@ -97,13 +75,6 @@ io.on('connection', (socket) => {
       console.error('Error joining game:', error);
       socket.emit('error', 'Failed to join game');
     }
-
-
-
-
-
-
-
   });
   
   // Start the game
@@ -303,35 +274,13 @@ io.on('connection', (socket) => {
   });
 
   // Handle chat messages
-  socket.on('send-chat-message', (message) => {
-    try {
-      const { gameId, sender, text, timestamp } = message;
-      
-      if (!games[gameId]) {
-        socket.emit('error', 'Game not found');
-        return;
-      }
-      
-      // Broadcast message to all players in the game
-      io.to(gameId).emit('chat-message', {
-        gameId,
-        sender,
-        text,
-        timestamp
-      });
-      
-      console.log(`Chat message in game ${gameId} from ${sender}: ${text}`);
-    } catch (error) {
-      console.error('Error sending chat message:', error);
-      socket.emit('error', 'Failed to send message');
-    }
-  });});
+  socket.on('send-chat', (messageData) => {
+    // Broadcast to all players in the game
+    io.to(messageData.gameId).emit('chat-message', messageData);
+  });
+});
 
 // Helper functions
-function generateGameId() {
-  return Math.random().toString(36).substring(2, 8).toUpperCase();
-}
-
 function createDeck() {
   const colors = ['red', 'green', 'blue', 'yellow'];
   const values = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'skip', 'reverse', 'draw two'];
@@ -450,3 +399,14 @@ server.listen(PORT, () => {
 
 // Export the serverless function
 module.exports.handler = serverless(app);
+
+// Chat message handling
+io.on('connection', (socket) => {
+  // Existing socket handlers...
+  
+  // Handle chat messages
+  socket.on('send-chat', (messageData) => {
+    // Broadcast to all players in the game
+    io.to(messageData.gameId).emit('chat-message', messageData);
+  });
+});

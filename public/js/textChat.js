@@ -15,13 +15,15 @@ function initChat(gameId, username) {
     addMessageToChat(message);
   });
   
+  console.log('Chat system initialized for game:', gameId, 'user:', username);
+  
   // Return cleanup function
   return function cleanup() {
     socket.off('chat-message');
     chatMessages = [];
     const chatContainer = document.getElementById('chat-container');
     if (chatContainer) {
-      chatContainer.classList.remove('expanded');
+      chatContainer.remove();
     }
   };
 }
@@ -85,7 +87,7 @@ function createChatUI() {
   const sendButton = document.createElement('button');
   sendButton.id = 'chat-send';
   sendButton.className = 'chat-send';
-  sendButton.innerHTML = '<i class="fas fa-paper-plane"></i>';
+  sendButton.textContent = 'Send';
   
   inputContainer.appendChild(chatInput);
   inputContainer.appendChild(sendButton);
@@ -95,26 +97,21 @@ function createChatUI() {
   chatContainer.appendChild(messagesContainer);
   chatContainer.appendChild(inputContainer);
   
-  // Add to game screen
-  const gameScreen = document.getElementById('game-screen');
-  if (gameScreen) {
-    gameScreen.appendChild(chatContainer);
-  } else {
-    document.body.appendChild(chatContainer);
-  }
+  // Add to document body
+  document.body.appendChild(chatContainer);
   
-  // Add notification badge
-  const notificationBadge = document.createElement('div');
-  notificationBadge.id = 'chat-notification';
-  notificationBadge.className = 'chat-notification';
-  notificationBadge.style.display = 'none';
-  chatHeader.appendChild(notificationBadge);
+  console.log('Chat UI created');
 }
 
 // Set up event listeners for the chat
 function setupChatEventListeners(gameId, username) {
   const chatInput = document.getElementById('chat-input');
   const sendButton = document.getElementById('chat-send');
+  
+  if (!chatInput || !sendButton) {
+    console.error('Chat input elements not found');
+    return;
+  }
   
   // Send message on button click
   sendButton.addEventListener('click', () => {
@@ -130,145 +127,76 @@ function setupChatEventListeners(gameId, username) {
     }
   });
   
-  // Clear notification when chat is expanded
-  const chatContainer = document.getElementById('chat-container');
-  const chatToggle = document.querySelector('.chat-toggle');
-  
-  chatToggle.addEventListener('click', () => {
-    if (chatContainer.classList.contains('expanded')) {
-      const notificationBadge = document.getElementById('chat-notification');
-      notificationBadge.style.display = 'none';
-      notificationBadge.textContent = '';
-    }
-  });
+  console.log('Chat event listeners set up');
 }
 
 // Send a chat message
-function sendChatMessage(text, gameId, username) {
-  text = text.trim();
-  if (!text) return;
+function sendChatMessage(message, gameId, username) {
+  if (!message.trim()) return;
   
-  const message = {
+  const messageData = {
     gameId: gameId,
     sender: username,
-    text: text,
+    text: message.trim(),
     timestamp: new Date().toISOString()
   };
   
   // Emit message to server
-  socket.emit('send-chat-message', message);
+  socket.emit('send-chat', messageData);
   
-  // Add message to local chat (for immediate display)
-  addMessageToChat(message);
+  console.log('Sending chat message:', messageData);
+  
+  // Add message to local chat (optimistic UI update)
+  addMessageToChat(messageData);
 }
 
-// Add a message to the chat
+// Add a message to the chat display
 function addMessageToChat(message) {
-  // Add to messages array (with limit)
+  // Add to messages array
   chatMessages.push(message);
+  
+  // Trim array if it exceeds max length
   if (chatMessages.length > MAX_MESSAGES) {
     chatMessages.shift();
   }
   
-  // Create message element
+  // Get messages container
   const messagesContainer = document.getElementById('chat-messages');
-  const messageElement = createMessageElement(message);
-  messagesContainer.appendChild(messageElement);
-  
-  // Scroll to bottom if chat is expanded
-  const chatContainer = document.getElementById('chat-container');
-  if (chatContainer.classList.contains('expanded')) {
-    messagesContainer.scrollTop = messagesContainer.scrollHeight;
-  } else {
-    // Show notification if chat is collapsed
-    const notificationBadge = document.getElementById('chat-notification');
-    const currentCount = parseInt(notificationBadge.textContent) || 0;
-    notificationBadge.textContent = currentCount + 1;
-    notificationBadge.style.display = 'block';
+  if (!messagesContainer) {
+    console.error('Chat messages container not found');
+    return;
   }
   
-  // Play notification sound
-  playNotificationSound();
-}
-
-// Create a message element
-function createMessageElement(message) {
+  // Create message element
   const messageElement = document.createElement('div');
   messageElement.className = 'chat-message';
   
-  // Check if this is a system message
-  const isSystem = message.sender === 'System';
-  if (isSystem) {
-    messageElement.classList.add('system-message');
-  }
-  
-  // Check if this is from the current user
-  const isCurrentUser = message.sender === myUsername;
-  if (isCurrentUser) {
-    messageElement.classList.add('my-message');
-  }
-  
-  // Create message content
-  const messageContent = document.createElement('div');
-  messageContent.className = 'message-content';
-  
-  if (!isSystem) {
-    // Add sender name
-    const senderElement = document.createElement('div');
-    senderElement.className = 'message-sender';
-    senderElement.textContent = message.sender;
-    messageContent.appendChild(senderElement);
-  }
+  // Add sender info
+  const senderElement = document.createElement('span');
+  senderElement.className = 'chat-sender';
+  senderElement.textContent = message.sender + ': ';
   
   // Add message text
-  const textElement = document.createElement('div');
-  textElement.className = 'message-text';
+  const textElement = document.createElement('span');
+  textElement.className = 'chat-text';
   textElement.textContent = message.text;
-  messageContent.appendChild(textElement);
   
-  // Add timestamp
-  const timestampElement = document.createElement('div');
-  timestampElement.className = 'message-timestamp';
-  timestampElement.textContent = formatTimestamp(message.timestamp);
-  messageContent.appendChild(timestampElement);
+  // Assemble message
+  messageElement.appendChild(senderElement);
+  messageElement.appendChild(textElement);
   
-  messageElement.appendChild(messageContent);
-  return messageElement;
+  // Add to container
+  messagesContainer.appendChild(messageElement);
+  
+  // Scroll to bottom
+  messagesContainer.scrollTop = messagesContainer.scrollHeight;
+  
+  console.log('Message added to chat:', message.text);
 }
 
-// Format timestamp for display
-function formatTimestamp(isoString) {
-  const date = new Date(isoString);
-  const hours = date.getHours().toString().padStart(2, '0');
-  const minutes = date.getMinutes().toString().padStart(2, '0');
-  return `${hours}:${minutes}`;
-}
-
-// Play notification sound
-function playNotificationSound() {
-  // Create audio element if it doesn't exist
-  let notificationSound = document.getElementById('notification-sound');
-  if (!notificationSound) {
-    notificationSound = document.createElement('audio');
-    notificationSound.id = 'notification-sound';
-    notificationSound.src = 'sounds/notification.mp3'; // Make sure this file exists
-    notificationSound.preload = 'auto';
-    document.body.appendChild(notificationSound);
-  }
-  
-  // Play sound
-  notificationSound.currentTime = 0;
-  notificationSound.play().catch(err => console.log('Could not play notification sound', err));
-}
-
-// Add a system message
-function addSystemMessage(gameId, text) {
-  const message = {
-    gameId: gameId,
-    sender: 'System',
-    text: text,
-    timestamp: new Date().toISOString()
-  };
-  
-  addMessageToChat(message);
-}
+// Export functions
+window.chatSystem = {
+  init: initChat,
+  sendMessage: sendChatMessage
+};
+console.log('Chat system loaded');

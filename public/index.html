@@ -6,7 +6,9 @@
     <title>Multiplayer UNO Game</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="animation.css">
-    <link rel="stylesheet" href="card-themes.css"> 
+    <link rel="stylesheet" href="card-themes.css">
+    <link rel="stylesheet" href="chat.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
     <script src="/socket.io/socket.io.js"></script>
     <!-- Load anime.js asynchronously -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" async defer></script>
@@ -86,7 +88,9 @@
     <!-- Load animation.js with defer to ensure it loads after anime.js -->
     <script src="js/animation.js" defer></script>
     <!-- Add these before the closing body tag -->
-    <script src="js/game.js"></script>    <script src="js/sleep.js" async></script>
+    <script src="js/game.js"></script>    
+    <script src="js/sleep.js" async></script>
+    <script src="js/textChat.js"></script>
     <script>
         // WhatsApp sharing functionality
         document.getElementById('share-whatsapp').addEventListener('click', function() {
@@ -211,4 +215,5 @@
     </script>
 </body>
 </html>
-<script src="https://cdn.jsdelivr.net/npm/simple-peer@9.11.0/simplepeer.min.js"></script>
+<link rel="stylesheet" href="chat.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
