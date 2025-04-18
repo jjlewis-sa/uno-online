@@ -1,9 +1,17 @@
-    // Connect to the server with explicit URL in production
-    const socket = io(window.location.origin, {
-      reconnectionAttempts: 5,
-      timeout: 10000,
-      transports: ['websocket', 'polling']
-    });
+    // Initialize socket connection
+    const socket = io();
+    window.gameSocket = socket; // Make socket available globally
+
+    // Initialize chat when game starts
+    function initializeChat(gameId, username) {
+      console.log('Attempting to initialize chat for', gameId, username);
+      if (window.chatSystem && typeof window.chatSystem.init === 'function') {
+        window.chatCleanup = window.chatSystem.init(gameId, username);
+        console.log('Chat initialized successfully');
+      } else {
+        console.error('Chat system not available');
+      }
+    }
 
     // Add connection event handlers
     socket.on('connect', () => {
@@ -18,7 +26,36 @@
       console.log('Disconnected:', reason);
     });
 
-    // DOM Elements
+    // Call this when a player joins a game
+    socket.on('game-joined', function(data) {
+      console.log('Game joined:', data);
+      
+      // Get username from the input field
+      const username = document.getElementById('username').value;
+      
+      // Initialize chat with game ID and username
+      initializeChat(data.gameId, username);
+    });
+
+    // Also initialize chat when game starts
+    socket.on('game-started', function(data) {
+      console.log('Game started:', data);
+      
+      // Get username from the input field
+      const username = document.getElementById('username').value;
+      
+      // Initialize chat with game ID and username
+      initializeChat(data.gameId, username);
+    });
+
+    // Clean up chat when game ends
+    socket.on('game-ended', () => {
+      // Your existing code...
+      
+      if (window.chatCleanup && typeof window.chatCleanup === 'function') {
+        window.chatCleanup();
+      }
+    });    // DOM Elements
     const loginScreen = document.getElementById('login-screen');
     const lobbyScreen = document.getElementById('lobby-screen');
     const gameScreen = document.getElementById('game-screen');

@@ -72,7 +72,6 @@
                 <button class="color-btn" data-color="yellow">Yellow</button>
             </div>
         </div>
-        
         <!-- Connection Status Indicator -->
         <div id="connection-status" style="position: fixed; bottom: 10px; right: 10px; font-size: 12px; color: green;">
             Connected
@@ -84,7 +83,6 @@
         </div>
             
     </div>
-    
     <!-- Load animation.js with defer to ensure it loads after anime.js -->
     <script src="js/animation.js" defer></script>
     <!-- Add these before the closing body tag -->
@@ -216,3 +214,17 @@
 
 </body>
 </html>
+<script>
+  document.getElementById('init-chat').addEventListener('click', function() {
+    const gameId = document.getElementById('game-id-display').textContent || 'test-game';
+    const username = document.getElementById('username').value || 'test-user';
+    console.log('Manual chat initialization with:', gameId, username);
+    
+    if (window.chatSystem && typeof window.chatSystem.init === 'function') {
+      window.chatCleanup = window.chatSystem.init(gameId, username);
+      console.log('Chat manually initialized');
+    } else {
+      console.error('Chat system not available for manual initialization');
+    }
+  });
+</script>
