@@ -136,15 +136,14 @@
                             connectionStatus.style.color = 'green';
                         } else {
                             connectionStatus.textContent = 'Disconnected';
-                            connectionStatus.style.color = 'red'; 
+                            connectionStatus.style.color = 'red';
 
                             // Try to reconnect if disconnected
                             if (socket) {
                                 socket.connect();
                             }
                         }
-                    }, 30000); 
-
+                    }, 30000);
                     // Set up event listeners for connection status
                     socket.on('connect', () => {
                         connectionStatus.textContent = 'Connected';
@@ -167,7 +166,6 @@
                             }
                         }
                     }); 
-
                     // Handle mobile-specific events
                     window.addEventListener('pagehide', () => {
                         // Store timestamp when page is hidden
@@ -184,8 +182,7 @@
                                 socket.connect();
                             }
                         }
-                    });
-                } else {
+                    });                } else {
                     // If socket.io isn't loaded yet, try again in a second
                     setTimeout(initSocketKeepalive, 1000);
                 }
