@@ -302,44 +302,30 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Audio chat signaling
-  socket.on('audio-signal', (data) => {
-    // Forward the signal to the specific recipient
-    if (data.gameId) {
-      // If there's a specific recipient
-      if (data.userToSignal) {
-        io.to(data.userToSignal).emit('audio-signal', {
-          signal: data.signal,
-          from: socket.id,
-          username: data.username
-        });
-      } 
-      // If responding to a specific caller
-      else if (data.to) {
-        io.to(data.to).emit('audio-signal', {
-          signal: data.signal,
-          from: socket.id,
-          username: data.username
-        });
+  // Handle chat messages
+  socket.on('send-chat-message', (message) => {
+    try {
+      const { gameId, sender, text, timestamp } = message;
+      
+      if (!games[gameId]) {
+        socket.emit('error', 'Game not found');
+        return;
       }
-      // Otherwise broadcast to the room
-      else {
-        socket.to(data.gameId).emit('audio-signal', {
-          signal: data.signal,
-          from: socket.id,
-          username: data.username
-        });
-      }
+      
+      // Broadcast message to all players in the game
+      io.to(gameId).emit('chat-message', {
+        gameId,
+        sender,
+        text,
+        timestamp
+      });
+      
+      console.log(`Chat message in game ${gameId} from ${sender}: ${text}`);
+    } catch (error) {
+      console.error('Error sending chat message:', error);
+      socket.emit('error', 'Failed to send message');
     }
-  });
-
-  socket.on('request-audio-connect', (data) => {
-    socket.to(data.gameId).emit('user-joined-audio', {
-      userId: socket.id,
-      username: data.username
-    });
-  });
-});
+  });});
 
 // Helper functions
 function generateGameId() {

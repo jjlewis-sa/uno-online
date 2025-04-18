@@ -80,19 +80,13 @@
         <div id="game-id-corner" style="position: fixed; top: 10px; left: 10px; font-size: 14px; color: black; display: none;">
             Game ID: <span id="current-game-id"></span>
         </div>
-        <div class="audio-controls">
-            <button id="toggle-audio" class="btn">Enable Audio Chat</button>
-            <div id="audio-status">Audio chat disabled</div>
-            <div id="participants"></div>
-        </div>
+            
     </div>
     
     <!-- Load animation.js with defer to ensure it loads after anime.js -->
     <script src="js/animation.js" defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/simple-peer@9.11.0/simplepeer.min.js"></script>
-    <script src="js/audioChat.js"></script>
-    <script src="js/game.js"></script>
-    <script src="js/sleep.js" async></script>
+    <!-- Add these before the closing body tag -->
+    <script src="js/game.js"></script>    <script src="js/sleep.js" async></script>
     <script>
         // WhatsApp sharing functionality
         document.getElementById('share-whatsapp').addEventListener('click', function() {
@@ -220,3 +214,4 @@
     </script>
 </body>
 </html>
+<script src="https://cdn.jsdelivr.net/npm/simple-peer@9.11.0/simplepeer.min.js"></script>

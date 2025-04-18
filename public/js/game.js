@@ -19,13 +19,6 @@ socket.on('disconnect', (reason) => {
   console.log('Disconnected:', reason);
 });
 
-// Global variables for audio chat
-//let localStream = null;
-let audioEnabled = false;
-//let peers = {};
-let audioCleanupFunction = null;
-
-
 // DOM Elements
 const loginScreen = document.getElementById('login-screen');
 const lobbyScreen = document.getElementById('lobby-screen');
@@ -56,16 +49,85 @@ document.getElementById('join-game').addEventListener('click', joinGame);
 document.getElementById('start-game').addEventListener('click', startGame);
 document.getElementById('draw-card').addEventListener('click', drawCard);
 
-const toggleAudioBtn = document.getElementById('toggle-audio');
-if (toggleAudioBtn) {
-  toggleAudioBtn.addEventListener('click', () => toggleAudio(socket, currentGameId, myUsername));
+document.addEventListener('DOMContentLoaded', () => {
+  // Find the toggle audio button
+  const toggleAudioBtn = document.getElementById('toggle-audio');
+  
+  // Add event listener if the button exists
+  if (toggleAudioBtn) {
+    toggleAudioBtn.addEventListener('click', handleAudioToggle);
+  }
+});
+
+// Handle audio toggle button click
+function handleAudioToggle() {
+  try {
+    const toggleBtn = document.getElementById('toggle-audio');
+    const statusEl = document.getElementById('audio-status');
+    
+    // Check if WebRTC is supported
+    if (!isWebRTCSupported()) {
+      alert('Your browser does not support audio chat. Please try using Chrome, Firefox, or Edge.');
+      return;
+    }
+    
+    // Check if we're in a secure context
+    if (!isSecureContext()) {
+      alert('Audio chat requires a secure connection (HTTPS). Please use HTTPS to enable audio chat.');
+      return;
+    }
+    
+    if (!audioInitialized) {
+      // Initialize audio
+      if (!currentGameId || !myUsername) {
+        alert('Please join a game first to use audio chat.');
+        return;
+      }
+      
+      // Initialize audio chat
+      initAudioChat(currentGameId, myUsername)
+        .then(success => {
+          if (success) {
+            audioInitialized = true;
+            audioEnabled = true;
+            if (toggleBtn) toggleBtn.classList.remove('muted');
+            if (statusEl) statusEl.textContent = 'Mic: On';
+          }
+        });
+    } else {
+      // Toggle mute if already initialized
+      audioEnabled = toggleMute();
+      
+      if (toggleBtn) {
+        toggleBtn.classList.toggle('muted', !audioEnabled);
+      }
+      
+      if (statusEl) {
+        statusEl.textContent = audioEnabled ? 'Mic: On' : 'Mic: Muted';
+      }
+    }
+  } catch (error) {
+    console.error('Error toggling audio:', error);
+  }
 }
 
-const leaveAudioChatBtn = document.getElementById('leave-audio-chat');
-if (leaveAudioChatBtn) {
-  leaveAudioChatBtn.addEventListener('click', leaveAudioChat);
-}
-// Update opponents display
+// Clean up when leaving a game
+function leaveGame() {
+  // Clean up audio chat
+  if (audioInitialized) {
+    cleanupAudioChat();
+    audioInitialized = false;
+    audioEnabled = false;
+    
+    const toggleBtn = document.getElementById('toggle-audio');
+    const statusEl = document.getElementById('audio-status');
+    
+    if (toggleBtn) toggleBtn.classList.add('muted');
+    if (statusEl) statusEl.textContent = 'Mic: Off';
+  }
+  
+  // Other cleanup code...
+}// Update opponents display
 function updateOpponents(players) {
     console.log('Updating opponents with:', players);
     
@@ -127,18 +189,26 @@ function createGame() {
 
 // Join an existing game
 function joinGame() {
-    myUsername = usernameInput.value.trim();
-    const gameId = gameIdInput.value.trim();
-    
-    if (!myUsername || !gameId) {
-        alert('Please enter both username and game ID');
-        return;
+    const username = usernameInput.value.trim();
+    const gameId = gameIdInput.value.trim().toUpperCase();
+  
+    if (!username) {
+      showError('Please enter a username');
+      return;
     }
-    
+  
+    if (!gameId) {
+      showError('Please enter a game ID');
+      return;
+    }
+  
+    myUsername = username;
     currentGameId = gameId;
-    socket.emit('joinGame', { gameId, username: myUsername });
+  
+    socket.emit('joinGame', { gameId, username });
+  
+    // Initialize
 }
-
 // Start the game
 function startGame() {
     socket.emit('startGame', currentGameId);
@@ -514,241 +584,4 @@ function initAudioChat(socket, gameId, username) {
             
             return function noop() {}; // Return empty cleanup function
         });
-}
-
-// Function to leave audio chat
-function leaveAudioChat() {
-    if (audioCleanupFunction) {
-        audioCleanupFunction();
-        audioCleanupFunction = null;
-        
-        const audioStatus = document.getElementById('audio-status');
-        const toggleAudioBtn = document.getElementById('toggle-audio');
-        
-        if (audioStatus) audioStatus.textContent = 'Audio chat disabled';
-        if (toggleAudioBtn) toggleAudioBtn.textContent = 'Enable Audio Chat';
-        
-        return true;
-    }
-    return false;
-}
-
-// Function to toggle audio chat
-function toggleAudio(socket, gameId, username) {
-    const audioButton = document.getElementById('toggle-audio');
-    const audioStatus = document.getElementById('audio-status');
-    
-    if (!audioButton || !audioStatus) return;
-    
-    if (audioEnabled) {
-        // Disable audio
-        leaveAudioChat();
-    } else {
-        // Enable audio
-        audioButton.disabled = true;
-        audioButton.textContent = 'Connecting...';
-        
-        // Check if this is an Android device
-        const isAndroid = /Android/i.test(navigator.userAgent);
-        
-        // Request permissions explicitly first on Android
-        if (isAndroid && navigator.permissions) {
-            navigator.permissions.query({ name: 'microphone' })
-                .then(permissionStatus => {
-                    if (permissionStatus.state === 'granted') {
-                        startAudioChat();
-                    } else {
-                        // Show instructions for Android users
-                        alert('Please grant microphone permission when prompted. If no prompt appears, check your browser settings.');
-                        startAudioChat();
-                    }
-                })
-                .catch(err => {
-                    console.log('Permission API not supported, trying direct access');
-                    startAudioChat();
-                });
-        } else {
-            startAudioChat();
-        }
-    }
-    
-    function startAudioChat() {
-        initAudioChat(socket, gameId, username)
-            .then(cleanup => {
-                audioCleanupFunction = cleanup;
-                if (audioEnabled) {
-                    audioButton.textContent = 'Disable Audio Chat';
-                    audioStatus.textContent = 'Audio chat enabled';
-                    audioStatus.className = 'status-enabled';
-                }
-            })
-            .finally(() => {
-                audioButton.disabled = false;
-            });
-    }
-}
-
-// Set up peer event handlers
-function setupPeerEventHandlers(socket, gameId, username, stream) {
-    // Handle new users joining
-    socket.on('user-joined-audio', data => {
-        console.log('User joined audio:', data.username);
-        // Create new peer connection
-        const peer = createPeer(data.userId, socket.id, stream, socket, gameId, username);
-        peers[data.userId] = peer;
-    });
-    
-    // Handle incoming signals
-    socket.on('audio-signal', data => {
-        console.log('Received audio signal from:', data.username || data.from);
-        if (data.from in peers) {
-            peers[data.from].signal(data.signal);
-        } else {
-            const peer = addPeer(data.signal, data.from, stream, socket, gameId, username);
-            peers[data.from] = peer;
-        }
-    });
-}
-
-// Create a peer connection as initiator
-function createPeer(userToSignal, callerId, stream, socket, gameId, username) {
-    // Android-friendly configuration
-    const peerConfig = {
-        initiator: true,
-        trickle: false,
-        stream: stream,
-        config: {
-            iceServers: [
-                { urls: 'stun:stun.l.google.com:19302' },
-                { urls: 'stun:stun1.l.google.com:19302' },
-                { urls: 'stun:stun2.l.google.com:19302' }
-            ]
-        }
-    };
-    
-    const peer = new SimplePeer(peerConfig);
-    
-    peer.on('signal', signal => {
-        console.log('Generated signal as initiator');
-        socket.emit('audio-signal', {
-            gameId,
-            signal,
-            username,
-            userToSignal
-        });
-    });
-    
-    peer.on('connect', () => {
-        console.log('Peer connection established with', userToSignal);
-    });
-    
-    peer.on('stream', remoteStream => {
-        console.log('Received remote stream');
-        addAudioElement(remoteStream, userToSignal);
-    });
-    
-    peer.on('error', err => {
-        console.error('Peer error:', err);
-    });
-    
-    return peer;
-}
-
-// Add a peer connection as receiver
-function addPeer(incomingSignal, callerId, stream, socket, gameId, username) {
-    // Android-friendly configuration
-    const peerConfig = {
-        initiator: false,
-        trickle: false,
-        stream: stream,
-        config: {
-            iceServers: [
-                { urls: 'stun:stun.l.google.com:19302' },
-                { urls: 'stun:stun1.l.google.com:19302' },
-                { urls: 'stun:stun2.l.google.com:19302' }
-            ]
-        }
-    };
-    
-    const peer = new SimplePeer(peerConfig);
-    
-    peer.on('signal', signal => {
-        console.log('Generated signal as receiver');
-        socket.emit('audio-signal', {
-            gameId,
-            signal,
-            username,
-            to: callerId
-        });
-    });
-    
-    peer.on('connect', () => {
-        console.log('Peer connection established with', callerId);
-    });
-    
-    peer.on('stream', remoteStream => {
-        console.log('Received remote stream');
-        addAudioElement(remoteStream, callerId);
-    });
-    
-    peer.on('error', err => {
-        console.error('Peer error:', err);
-    });
-    
-    // Accept the incoming signal
-    peer.signal(incomingSignal);
-    
-    return peer;
-}
-
-// Adds an audio element to play the remote stream
-function addAudioElement(stream, userId) {
-    const audio = document.createElement('audio');
-    audio.srcObject = stream;
-    audio.autoplay = true;
-    audio.controls = false; // Hidden controls
-    audio.id = `audio-${userId}`;
-    document.body.appendChild(audio);
-}
-
-// Creates the audio controls UI
-function createAudioControls(socket, gameId, username) {
-    const audioControls = document.createElement('div');
-    audioControls.className = 'audio-controls';
-    
-    const audioButton = document.createElement('button');
-    audioButton.id = 'audio-button';
-    audioButton.className = 'btn';
-    audioButton.textContent = 'Enable Audio Chat';
-    audioButton.onclick = () => toggleAudio(socket, gameId, username);
-    
-    const audioStatus = document.createElement('div');
-    audioStatus.id = 'audio-status';
-    audioStatus.className = 'status-disabled';
-    audioStatus.textContent = 'Audio chat disabled';
-    
-    audioControls.appendChild(audioButton);
-    audioControls.appendChild(audioStatus);
-    
-    return audioControls;
-}
-
-// Make sure to add this to your game initialization code
-function initGame(socket, gameId, username) {
-    // ... existing game initialization code ...
-    
-    // Add audio controls to the game UI
-    const gameContainer = document.getElementById('game-container');
-    const audioControls = createAudioControls(socket, gameId, username);
-    gameContainer.appendChild(audioControls);
-}
-
-// Clean up function for when the game ends
-function endGame() {
-    // ... existing end game code ...
-    
-    // Clean up audio
-    if (audioEnabled) {
-        toggleAudio(socket, gameId, username);
-    }
 }
