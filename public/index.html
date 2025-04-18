@@ -91,7 +91,7 @@
         // WhatsApp sharing functionality
         document.getElementById('share-whatsapp').addEventListener('click', function() {
             const gameId = document.getElementById('game-id-display').textContent;
-            const gameUrl = "https://boxgames.co.za/unoplay/?gameId=";
+            const gameUrl = "https://uno-online-cu1b.onrender.com/?gameId=";
             const message = `Join my UNO game! Go to ${gameUrl}${gameId}`;
             const encodedMessage = encodeURIComponent(message);
             const whatsappUrl = `https://wa.me/?text=${encodedMessage}`;
