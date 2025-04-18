@@ -82,7 +82,7 @@ button:hover {
   padding: 10px;
   margin: 10px 0;
   border-radius: 8px;
-  background-color: #f5f5f5;
+  background-color: #121212;
   transition: all 0.3s ease;
 }
 
@@ -265,148 +265,153 @@ button:hover {
 .share-button:hover {
     background-color: #128C7E; /* Darker WhatsApp green */
 }
+
 #game-rules {
     max-width: 800px;
     margin: 0 auto;
     padding: 15px;
     border: 1px solid #444;
-        border-radius: 8px;
-        background-color: #333;
-        margin-top: 20px;
-        font-size: 1em;
-        color: #f9f9f9;
-    }
-    .game-rules h1 {
-        margin-bottom: 20px;
-        font-size: 2em;
-        color: #ffffff; /* Light text color */
-    }
-    .game-rules h2 {
-        margin-bottom: 10px;
-        font-size: 1.5em;
-        color: #444;
-    }
+    border-radius: 8px;
+    background-color: #333;
+    margin-top: 20px;
+    font-size: 1em;
+    color: #f9f9f9;
+}
 
-    .game-rules p {
-        line-height: 1.6;
-    }
-    .game-rules ul {
-        margin-left: 20px;
-        list-style-type: disc;
-    }
-    .game-rules li {
-        margin-bottom: 5px;
-    }
-    #toggle-game-rules {
-        max-width: 400px;
-        background-color: #2196F3; /* Blue background */
-        color: white;
-        border: none;
-        padding: 10px 20px;
-        border-radius: 5px;
-        cursor: pointer;
-        font-size: 1em;
-        margin-top: 20px;
-    }
-    .game-notification {
-        position: fixed;
-        top: 20px;
-        left: 50%;
-        transform: translateX(-50%);
-        background-color: rgba(0, 0, 0, 0.7);
-        color: white;
-        padding: 10px 20px;
-        border-radius: 5px;
-        z-index: 1000;
-        animation: fadeInOut 3s ease-in-out;
-      }
-      
-      @keyframes fadeInOut {
-        0% { opacity: 0; }
-        10% { opacity: 1; }
-        90% { opacity: 1; }
-        100% { opacity: 0; }
-      }
-      .audio-chat-container {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 10px;
-        margin: 10px 0;
-        padding: 10px;
-        background-color: rgba(0, 0, 0, 0.1);
-        border-radius: 5px;
-      }
+.game-rules h1 {
+    margin-bottom: 20px;
+    font-size: 2em;
+    color: #ffffff; /* Light text color */
+}
 
-      .audio-user-container {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        background-color: #f0f0f0;
-        padding: 5px;
-        border-radius: 5px;
-      }
+.game-rules h2 {
+    margin-bottom: 10px;
+    font-size: 1.5em;
+    color: #444;
+}
 
-      .audio-user-label {
-        font-size: 12px;
-        margin-top: 5px;
-        color: #333;
-      }
+.game-rules p {
+    line-height: 1.6;
+}
 
-      .audio-controls {
-        display: flex;
-        gap: 10px;
-        margin: 10px 0;
-      }
+.game-rules ul {
+    margin-left: 20px;
+    list-style-type: disc;
+}
 
-/* Add this to your CSS */
+.game-rules li {
+    margin-bottom: 5px;
+}
+
+#toggle-game-rules {
+    max-width: 400px;
+    background-color: #2196F3; /* Blue background */
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1em;
+    margin-top: 20px;
+}
+
+.game-notification {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 5px;
+    z-index: 1000;
+    animation: fadeInOut 3s ease-in-out;
+}
+
+@keyframes fadeInOut {
+    0% { opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+.audio-chat-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 10px 0;
+    padding: 10px;
+    background-color: rgba(0, 0, 0, 0.1);
+    border-radius: 5px;
+}
+
+.audio-user-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-color: #f0f0f0;
+    padding: 5px;
+    border-radius: 5px;
+}
+
+.audio-user-label {
+    font-size: 12px;
+    margin-top: 5px;
+    color: #333;
+}
+
+.audio-controls {
+    display: flex;
+    gap: 10px;
+    margin: 10px 0;
+}
+
 .connection-status {
-  position: fixed;
-  top: 10px;
-  right: 10px;
-  padding: 5px 10px;
-  border-radius: 5px;
-  font-size: 12px;
-  z-index: 1000;
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-size: 12px;
+    z-index: 1000;
 }
 
 .connection-status.connected {
-  background-color: #4CAF50;
-  color: white;
+    background-color: #4CAF50;
+    color: white;
 }
 
 .connection-status.disconnected {
-  background-color: #f44336;
-  color: white;
+    background-color: #f44336;
+    color: white;
 }
 
 .connection-status.reconnecting {
-  background-color: #ff9800;
-  color: white;
+    background-color: #ff9800;
+    color: white;
 }
 
-/* Add this to your CSS file */
 .next-player-info {
-  margin: 5px 0;
-  padding: 5px 10px;
-  background-color: #f0f0f0;
-  border-radius: 4px;
-  font-size: 14px;
+    margin: 5px 0;
+    padding: 5px 10px;
+    background-color: #f0f0f0;
+    border-radius: 4px;
+    font-size: 14px;
 }
 
 .next-player-info.next-is-you {
-  background-color: #ffe0b2;
-  border-left: 3px solid #ff9800;
-  font-weight: bold;
+    background-color: #ffe0b2;
+    border-left: 3px solid #ff9800;
+    font-weight: bold;
 }
 
-/* Enhance existing status styles */
 .status-active {
-  color: #4CAF50;
-  font-weight: bold;
+    color: #4CAF50;
+    font-weight: bold;
 }
 
 .status-waiting {
-  color: #757575;
+    color: #757575;
 }
 
 .next-opponent {
@@ -418,4 +423,3 @@ button:hover {
 .opponent-name {
     font-weight: bold;
 }
-      

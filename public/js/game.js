@@ -1,3 +1,4 @@
+
 // Connect to the server with explicit URL in production
 const socket = io(window.location.origin, {
   reconnectionAttempts: 5,
@@ -64,7 +65,46 @@ const leaveAudioChatBtn = document.getElementById('leave-audio-chat');
 if (leaveAudioChatBtn) {
   leaveAudioChatBtn.addEventListener('click', leaveAudioChat);
 }
-
+// Update opponents display
+function updateOpponents(players) {
+    console.log('Updating opponents with:', players);
+    
+    // Validate the DOM element
+    if (!opponentsArea) {
+        console.error('opponents-area element not found in the DOM');
+        return;
+    }
+    
+    // Clear the current opponents display
+    opponentsArea.innerHTML = '';
+    
+    // Handle different possible data structures
+    if (!players || !Array.isArray(players)) {
+        console.error('Invalid players data:', players);
+        return;
+    }
+    
+    // Process each player
+    players.forEach(player => {
+        // Skip the current player
+        const playerUsername = typeof player === 'object' ? player.username : player;
+        const cardCount = player.cardCount !== undefined ? player.cardCount : '?';
+        
+        if (playerUsername !== myUsername) {
+            const opponentElement = document.createElement('div');
+            opponentElement.className = 'opponent';
+            opponentElement.innerHTML = `
+                <div class="opponent-name">${playerUsername}</div>
+                <div class="opponent-cards">${cardCount} cards</div>
+            `;
+            
+            opponentsArea.appendChild(opponentElement);
+        }
+    });
+    
+    // Log the result
+    console.log('Opponents area updated with', opponentsArea.children.length, 'players');
+}
 // Color picker buttons
 document.querySelectorAll('.color-btn').forEach(button => {
     button.addEventListener('click', () => {
@@ -301,6 +341,10 @@ socket.on('updateGame', (data) => {
     // Update discard pile
     updateDiscardPile(data.currentCard);
     
+    // Update opponents
+    if (data.players) {
+        updateOpponents(data.players);
+    }
     
     // Check if it's my turn
     isMyTurn = data.currentPlayer === myUsername;
@@ -321,7 +365,6 @@ socket.on('updateGame', (data) => {
                 turnSound.play();
     }
 });
-
 // Update the socket.on('selectColor') handler
 socket.on('selectColor', () => {
     // Only show color picker if we're not already handling a wild card
