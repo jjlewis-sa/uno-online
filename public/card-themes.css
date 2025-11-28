@@ -13,22 +13,26 @@
 /* Card background patterns based on color */
 .card.red {
     background: linear-gradient(135deg, #ff5555, #aa0000);
-    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><path d="M20,20 L80,20 L80,80 L20,80 Z" fill="none" stroke="%23ff7777" stroke-width="2" stroke-dasharray="5,5" /></svg>'), linear-gradient(135deg, #ff5555, #aa0000);
+    background-image: url('../images/power-rangers-anime-red.png'), linear-gradient(135deg, #ff5555, #aa0000);
+    background-size: cover, 100% 70%;
 }
 
 .card.blue {
     background: linear-gradient(135deg, #5555ff, #0000aa);
-    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><circle cx="50" cy="50" r="30" fill="none" stroke="%237777ff" stroke-width="2" /></svg>'), linear-gradient(135deg, #5555ff, #0000aa);
+    background-image: url('../images/power-rangers-anime-blue.png'), linear-gradient(135deg, #5555ff, #0000aa);
+    background-size: cover, 100% 70%;
 }
 
 .card.green {
     background: linear-gradient(135deg, #55ff55, #00aa00);
-    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><polygon points="50,20 80,80 20,80" fill="none" stroke="%2377ff77" stroke-width="2" /></svg>'), linear-gradient(135deg, #55ff55, #00aa00);
+    background-image: url('../images/power-rangers-anime-green.png'), linear-gradient(135deg, #55ff55, #00aa00);
+    background-size: cover, 100% 70%;
 }
 
 .card.yellow {
     background: linear-gradient(135deg, #ffff55, #aaaa00);
-    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><path d="M20,50 Q50,20 80,50 Q50,80 20,50" fill="none" stroke="%23ffff77" stroke-width="2" /></svg>'), linear-gradient(135deg, #ffff55, #aaaa00);
+    background-image: url('../images/power-rangers-anime-yellow.png'), linear-gradient(135deg, #ffff55, #aaaa00);
+    background-size: cover, 100% 70%;
 }
 
 .card.wild {
@@ -56,6 +60,44 @@
     color: white;
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
     font-family: 'Arial', sans-serif;
+    -webkit-text-stroke: 2px rgb(15, 15, 15);
+}
+
+.card-content::before {
+    content: '';
+    position: absolute;
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    z-index: -1;
+}
+
+.card-content::after {
+    content: '';
+    position: absolute;
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    border: 3px solid rgba(255, 255, 255, 0.8);
+    z-index: -1;
+}
+
+.card.red .card-content::before { box-shadow: 0 0 20px #ff5555; }
+.card.blue .card-content::before { box-shadow: 0 0 20px #5555ff; }
+.card.green .card-content::before { box-shadow: 0 0 20px #55ff55; }
+.card.yellow .card-content::before { box-shadow: 0 0 20px #ffff55; }
+.card.wild .card-content::before { 
+    box-shadow: 0 0 20px #fff;
+    animation: wildCircleGlow 3s ease infinite;
+}
+
+@keyframes wildCircleGlow {
+    0% { box-shadow: 0 0 20px #ff5555; }
+    25% { box-shadow: 0 0 20px #55ff55; }
+    50% { box-shadow: 0 0 20px #5555ff; }
+    75% { box-shadow: 0 0 20px #ffff55; }
+    100% { box-shadow: 0 0 20px #ff5555; }
 }
 
 /* Card glow effects on hover */

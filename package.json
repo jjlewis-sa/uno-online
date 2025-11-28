@@ -1,7 +1,7 @@
 {
-  "name": "uno-online",
+  "name": "multiplayer-keno",
   "version": "1.0.0",
-  "description": "Online UNO card game",
+  "description": "Online Multiplayer Keno lottery game",
   "main": "server.js",
   "engines": {
     "node": "14.x"
