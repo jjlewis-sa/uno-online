@@ -1,0 +1,1106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Keno Game Lobby Display</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header Section */
+        .header {
+            text-align: center;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+        }
+
+        .title {
+            font-size: 3rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .game-info {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+
+        .game-id-section {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px 30px;
+            border-radius: 15px;
+            border: 2px solid #4CAF50;
+            min-width: 250px;
+            text-align: center;
+        }
+
+        .game-id-label {
+            font-size: 1.2rem;
+            margin-bottom: 5px;
+        }
+
+        .game-id {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #4CAF50;
+            letter-spacing: 3px;
+        }
+
+        .status-section {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .status {
+            font-size: 1.3rem;
+            padding: 12px 24px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            min-width: 200px;
+            max-width: 250px;
+            text-align: center;
+            display: inline-block;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1.2;
+        }
+
+        .drawing-indicator {
+            font-size: 1.3rem;
+            padding: 12px 24px;
+            border-radius: 10px;
+            background: rgba(255, 107, 107, 0.2);
+            border: 2px solid #ff6b6b;
+            min-width: 200px;
+            max-width: 250px;
+            text-align: center;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            height: 50px;
+            animation: pulse 1.5s infinite;
+        }
+
+        .timer {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #ffeb3b;
+            min-width: 100px;
+            max-width: 120px;
+            text-align: center;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            height: 50px;
+            background: rgba(255, 235, 59, 0.1);
+            border: 2px solid #ffeb3b;
+            border-radius: 10px;
+            padding: 0 15px;
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(255, 107, 107, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(255, 107, 107, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(255, 107, 107, 0);
+            }
+        }
+
+        /* Main Content Area */
+        .main-content {
+            display: flex;
+            flex: 1;
+            gap: 20px;
+            padding: 20px;
+        }
+
+        /* Keno Board Section */
+        .keno-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .keno-board {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .keno-grid {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            grid-template-rows: repeat(8, 1fr);
+            gap: 8px;
+            height: 100%;
+            max-height: 70vh;
+        }
+
+        .keno-number {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .keno-number.drawn {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            border-color: #ff6b6b;
+            box-shadow: 0 0 20px rgba(255, 107, 107, 0.6);
+            animation: drawAnimation 0.6s ease-out;
+            color: white;
+        }
+
+        .keno-number.winning {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            border-color: #4CAF50;
+            box-shadow: 0 0 30px rgba(76, 175, 80, 0.8);
+            animation: winningAnimation 1s ease-in-out infinite alternate;
+            color: white;
+        }
+
+        @keyframes drawAnimation {
+            0% {
+                transform: scale(1);
+                background: rgba(255, 255, 255, 0.1);
+            }
+            50% {
+                transform: scale(1.1);
+                background: #ff6b6b;
+            }
+            100% {
+                transform: scale(1);
+                background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            }
+        }
+
+        @keyframes winningAnimation {
+            0% {
+                box-shadow: 0 0 20px rgba(76, 175, 80, 0.6);
+                transform: scale(1);
+            }
+            100% {
+                box-shadow: 0 0 40px rgba(76, 175, 80, 1);
+                transform: scale(1.05);
+            }
+        }
+
+        /* Players Section */
+        .players-section {
+            width: 300px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .players-title {
+            font-size: 1.8rem;
+            margin-bottom: 15px;
+            text-align: center;
+            color: #4CAF50;
+        }
+
+        .players-list {
+            font-size: 1.2rem;
+            line-height: 1.8;
+        }
+
+        .player-item {
+            padding: 8px 12px;
+            margin: 5px 0;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            border-left: 4px solid #4CAF50;
+        }
+
+        /* Chat Section */
+        .chat-section {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 150px;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            border-top: 2px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .chat-header {
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chat-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        .chat-messages {
+            height: 100px;
+            overflow-y: auto;
+            padding: 10px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .chat-message {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.1rem;
+            animation: slideInLeft 0.3s ease-out;
+        }
+
+        .chat-message.own {
+            flex-direction: row-reverse;
+            animation: slideInRight 0.3s ease-out;
+        }
+
+        .chat-sender {
+            font-weight: bold;
+            color: #4CAF50;
+        }
+
+        .chat-text {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 5px 12px;
+            border-radius: 15px;
+            max-width: 70%;
+        }
+
+        .chat-message.own .chat-text {
+            background: rgba(76, 175, 80, 0.3);
+        }
+
+        @keyframes slideInLeft {
+            from {
+                transform: translateX(-100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* Loading/Setup Screen */
+        .setup-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 30px;
+            z-index: 1000;
+        }
+
+        .setup-form {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .setup-form h2 {
+            font-size: 2rem;
+            margin-bottom: 20px;
+            color: #4CAF50;
+        }
+
+        .game-id-input {
+            font-size: 1.5rem;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            width: 300px;
+            text-align: center;
+            margin-bottom: 20px;
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+        .connect-button {
+            font-size: 1.3rem;
+            padding: 15px 40px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .connect-button:hover {
+            background: #45a049;
+            transform: scale(1.05);
+        }
+
+        /* Tab Button Styles */
+        .tab-button {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            padding: 10px 20px;
+            margin: 0 5px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .tab-button:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.05);
+        }
+
+        .tab-button.active {
+            background: #4CAF50;
+            border-color: #4CAF50;
+            color: white;
+        }
+
+        .connection-status {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-weight: bold;
+        }
+
+        .connected {
+            background: rgba(76, 175, 80, 0.8);
+            color: white;
+        }
+
+        .disconnected {
+            background: rgba(244, 67, 54, 0.8);
+            color: white;
+        }
+
+        /* Responsive design for different screen sizes */
+        @media (max-width: 1024px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .players-section {
+                width: 100%;
+                height: 200px;
+            }
+            
+            .keno-grid {
+                max-height: 50vh;
+            }
+            
+            .title {
+                font-size: 2rem;
+            }
+            
+            .game-id {
+                font-size: 1.8rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                padding: 10px;
+            }
+            
+            .game-info {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .keno-number {
+                font-size: 1rem;
+            }
+            
+            .chat-section {
+                height: 120px;
+            }
+            
+            .chat-messages {
+                height: 80px;
+            }
+            
+            /* Setup form mobile responsive */
+            .setup-form {
+                padding: 20px;
+                margin: 10px;
+            }
+            
+            .tab-button {
+                padding: 8px 16px;
+                font-size: 0.9rem;
+            }
+            
+            .game-id-input {
+                font-size: 1.2rem;
+                padding: 12px;
+                width: 250px;
+            }
+            
+            .status {
+                min-width: 150px;
+                font-size: 1.2rem;
+            }
+            
+            .timer {
+                min-width: 80px;
+                font-size: 1.5rem;
+            }
+            
+            .game-id-section {
+                min-width: 200px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Setup Screen -->
+    <div id="setup-screen" class="setup-screen">
+        <div class="setup-form">
+            <h2>🎱 Keno Lobby Display</h2>
+            
+            <!-- Tab Navigation -->
+            <div style="margin-bottom: 20px;">
+                <button id="tab-join" class="tab-button active">Join Game</button>
+                <button id="tab-create" class="tab-button">Create Game</button>
+            </div>
+            
+            <!-- Join Game Tab -->
+            <div id="join-game-section">
+                <p style="margin-bottom: 20px; font-size: 1.2rem;">Enter Game ID to Display</p>
+                <input type="text" id="game-id-input" class="game-id-input" placeholder="Enter Game ID" maxlength="6" style="text-transform: uppercase;">
+                <br>
+                <button id="connect-button" class="connect-button">Connect to Game</button>
+            </div>
+            
+            <!-- Create Game Tab -->
+            <div id="create-game-section" style="display: none;">
+                <p style="margin-bottom: 20px; font-size: 1.2rem;">Create a New Game</p>
+                <input type="text" id="creator-name-input" class="game-id-input" placeholder="Your Name" maxlength="20">
+                <br>
+                <input type="text" id="game-name-input" class="game-id-input" placeholder="Game Name (Optional)" maxlength="30">
+                <br>
+                <button id="create-game-button" class="connect-button">Create New Game</button>
+                <div style="margin-top: 20px; padding: 15px; background: rgba(255,255,255,0.1); border-radius: 10px; font-size: 0.9rem;">
+                    <h4>📺 Big Screen TV Display</h4>
+                    <p>Click "Open Lobby Display" on the main game screen to show this game on a big screen TV!</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Connection Status -->
+    <div id="connection-status" class="connection-status disconnected" style="display: none;">
+        <i class="fas fa-wifi"></i> <span id="status-text">Disconnected</span>
+    </div>
+
+    <!-- Main Display -->
+    <div id="main-display" style="display: none;">
+        <!-- Header -->
+        <div class="header">
+            <h1 class="title">🎱 MULTIPLAYER KENO</h1>
+            <div class="game-info">
+                <div class="game-id-section">
+                    <div class="game-id-label">GAME ID</div>
+                    <div class="game-id" id="display-game-id">------</div>
+                </div>
+                <div class="status-section">
+                    <div class="status" id="game-status">Loading...</div>
+                    <div class="drawing-indicator" id="drawing-indicator">
+                        <i class="fas fa-dice"></i> Drawing Numbers...
+                    </div>
+                    <div class="timer" id="timer-display">--:--</div>
+                </div>
+            </div>
+            <!-- Join Instructions Banner -->
+            <div id="join-instructions" style="margin-top: 15px; padding: 15px; background: rgba(76, 175, 80, 0.2); border-radius: 10px; border: 2px solid #4CAF50; display: none;">
+                <h4 style="color: #4CAF50; margin-bottom: 10px;">📱 Players: Join this game!</h4>
+                <p style="font-size: 1.1rem; margin: 5px 0;">Go to: <strong style="color: #ffeb3b;" id="game-url">game-url</strong></p>
+                <p style="font-size: 0.9rem; opacity: 0.8;">Enter Game ID: <strong style="color: #ffeb3b;" id="game-id-for-join">------</strong></p>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Keno Board -->
+            <div class="keno-section">
+                <div class="keno-board">
+                    <div class="keno-grid" id="keno-grid">
+                        <!-- Numbers 1-80 will be generated here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Players List -->
+            <div class="players-section">
+                <h3 class="players-title">👥 Players</h3>
+                <div class="players-list" id="players-list">
+                    <div class="player-item">Waiting for players...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chat Section -->
+    <div class="chat-section" id="chat-section">
+        <div class="chat-header">
+            <div class="chat-title">
+                <i class="fas fa-comments"></i> Live Chat
+            </div>
+            <div class="chat-participants" id="chat-participants">0 players</div>
+        </div>
+        <div class="chat-messages" id="chat-messages">
+            <!-- Messages will appear here -->
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let socket;
+        let currentGameId = null;
+        let chatMessages = [];
+        const MAX_CHAT_MESSAGES = 20;
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            generateKenoGrid();
+            setupEventListeners();
+            
+            // Check if game ID is in URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const gameIdFromUrl = urlParams.get('gameId');
+            if (gameIdFromUrl) {
+                document.getElementById('game-id-input').value = gameIdFromUrl.toUpperCase();
+            }
+        });
+
+        // Generate the 80-number Keno grid
+        function generateKenoGrid() {
+            const kenoGrid = document.getElementById('keno-grid');
+            kenoGrid.innerHTML = '';
+            
+            for (let i = 1; i <= 80; i++) {
+                const numberDiv = document.createElement('div');
+                numberDiv.className = 'keno-number';
+                numberDiv.textContent = i;
+                numberDiv.id = `keno-${i}`;
+                kenoGrid.appendChild(numberDiv);
+            }
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            // Tab switching
+            document.getElementById('tab-join').addEventListener('click', function() {
+                switchTab('join');
+            });
+            document.getElementById('tab-create').addEventListener('click', function() {
+                switchTab('create');
+            });
+
+            // Join game functionality
+            document.getElementById('connect-button').addEventListener('click', connectToGame);
+            document.getElementById('game-id-input').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    connectToGame();
+                }
+            });
+
+            // Create game functionality
+            document.getElementById('create-game-button').addEventListener('click', createGame);
+            document.getElementById('creator-name-input').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    createGame();
+                }
+            });
+
+            // Auto-uppercase game ID input
+            document.getElementById('game-id-input').addEventListener('input', function(e) {
+                e.target.value = e.target.value.toUpperCase();
+            });
+        }
+
+        // Switch between tabs
+        function switchTab(tab) {
+            const joinTab = document.getElementById('tab-join');
+            const createTab = document.getElementById('tab-create');
+            const joinSection = document.getElementById('join-game-section');
+            const createSection = document.getElementById('create-game-section');
+
+            if (tab === 'join') {
+                joinTab.classList.add('active');
+                createTab.classList.remove('active');
+                joinSection.style.display = 'block';
+                createSection.style.display = 'none';
+            } else {
+                createTab.classList.add('active');
+                joinTab.classList.remove('active');
+                createSection.style.display = 'block';
+                joinSection.style.display = 'none';
+            }
+        }
+
+        // Create a new game
+        function createGame() {
+            const creatorName = document.getElementById('creator-name-input').value.trim();
+            
+            if (!creatorName) {
+                alert('Please enter your name');
+                return;
+            }
+
+            // Show loading state
+            const createButton = document.getElementById('create-game-button');
+            const originalText = createButton.textContent;
+            createButton.textContent = 'Creating Game...';
+            createButton.disabled = true;
+
+            currentGameId = null; // Will be set by server response
+            
+            // Initialize socket connection
+            if (!socket) {
+                socket = io();
+                setupSocketHandlers();
+            }
+            
+            // Create the game
+            socket.emit('createGame', creatorName);
+
+            // Reset button after a delay if no response
+            setTimeout(() => {
+                createButton.textContent = originalText;
+                createButton.disabled = false;
+            }, 5000);
+        }
+
+        // Connect to game
+        function connectToGame() {
+            const gameId = document.getElementById('game-id-input').value.trim().toUpperCase();
+            
+            if (!gameId) {
+                alert('Please enter a Game ID');
+                return;
+            }
+
+            currentGameId = gameId;
+            
+            // Initialize socket connection
+            socket = io();
+            
+            // Setup socket event handlers
+            setupSocketHandlers();
+            
+            // Join the game room as a display client
+            socket.emit('joinGame', { 
+                gameId: gameId, 
+                username: 'Lobby Display' 
+            });
+        }
+
+        // Setup socket event handlers
+        function setupSocketHandlers() {
+            socket.on('connect', () => {
+                console.log('Connected to server');
+                updateConnectionStatus(true);
+                
+                if (currentGameId) {
+                    socket.emit('joinGame', { 
+                        gameId: currentGameId, 
+                        username: 'Lobby Display' 
+                    });
+                }
+            });
+
+            socket.on('disconnect', () => {
+                console.log('Disconnected from server');
+                updateConnectionStatus(false);
+            });
+
+            socket.on('connect_error', (error) => {
+                console.error('Connection error:', error);
+                updateConnectionStatus(false);
+            });
+
+            // Game state updates
+            socket.on('gameState', (data) => {
+                console.log('Game state received:', data);
+                updateGameState(data);
+            });
+
+            socket.on('drawingStarted', (data) => {
+                console.log('Drawing started:', data);
+                showDrawnNumbers(data.drawnNumbers);
+                updateGameStatus('🎱 Drawing Numbers...', 'drawing');
+            });
+
+            socket.on('roundResults', (data) => {
+                console.log('Round results:', data);
+                showResults(data);
+                updateGameStatus('🎉 Round Complete', 'results');
+            });
+
+            socket.on('newRound', (data) => {
+                console.log('New round:', data);
+                clearKenoBoard();
+                updateGameStatus('🚀 New Round Starting', 'betting');
+                startTimer(data.nextDrawTime, data.serverTime);
+            });
+
+            // Player updates
+            socket.on('playerJoined', (data) => {
+                console.log('Player joined:', data);
+                updatePlayersList(data.players);
+                addChatMessage('System', `${data.players[data.players.length - 1]} joined the game`);
+            });
+
+            socket.on('playerLeft', (data) => {
+                console.log('Player left:', data);
+                updatePlayersList(data.players);
+                addChatMessage('System', 'A player left the game');
+            });
+
+            // Chat messages
+            socket.on('chat-message', (message) => {
+                addChatMessage(message.sender, message.text);
+            });
+
+            // Error handling
+            socket.on('error', (message) => {
+                console.error('Server error:', message);
+                addChatMessage('System', `Error: ${message}`);
+            });
+
+            socket.on('gameCreated', (gameId) => {
+                console.log('Game created successfully:', gameId);
+                currentGameId = gameId;
+                updateConnectionStatus(true);
+            });
+
+            socket.on('gameJoined', (data) => {
+                console.log('Joined game successfully:', data);
+                
+                // Update current game ID if not already set
+                if (!currentGameId) {
+                    currentGameId = data.gameId;
+                }
+                
+                // Hide setup screen and show main display
+                document.getElementById('setup-screen').style.display = 'none';
+                document.getElementById('main-display').style.display = 'flex';
+                document.getElementById('display-game-id').textContent = data.gameId;
+                
+                // Show join instructions
+                showJoinInstructions(data.gameId);
+                
+                updatePlayersList(data.players);
+                if (data.nextDrawTime) {
+                    startTimer(data.nextDrawTime, data.serverTime);
+                }
+                
+                // Request current game state
+                socket.emit('getGameState', currentGameId);
+            });
+        }
+
+        // Update connection status
+        function updateConnectionStatus(connected) {
+            const statusElement = document.getElementById('connection-status');
+            const statusText = document.getElementById('status-text');
+            
+            if (connected) {
+                statusElement.className = 'connection-status connected';
+                statusText.textContent = 'Connected';
+                statusElement.style.display = 'block';
+            } else {
+                statusElement.className = 'connection-status disconnected';
+                statusText.textContent = 'Disconnected';
+                statusElement.style.display = 'block';
+            }
+        }
+
+        // Update game status
+        function updateGameStatus(status, gameState = null) {
+            const statusElement = document.getElementById('game-status');
+            const drawingElement = document.getElementById('drawing-indicator');
+            const timerElement = document.getElementById('timer-display');
+            
+            // Hide all elements first
+            statusElement.style.display = 'none';
+            drawingElement.style.display = 'none';
+            timerElement.style.display = 'none';
+            
+            if (gameState === 'drawing') {
+                // Show drawing indicator during drawing phase
+                drawingElement.style.display = 'flex';
+            } else if (gameState === 'betting') {
+                // Show status and timer during betting phase
+                statusElement.style.display = 'flex';
+                statusElement.textContent = status;
+                timerElement.style.display = 'flex';
+            } else {
+                // Show status for other states (results, etc.)
+                statusElement.style.display = 'flex';
+                statusElement.textContent = status;
+            }
+        }
+
+        // Update timer with server time synchronization
+        function startTimer(nextDrawTime, serverTime = null) {
+            const timerElement = document.getElementById('timer-display');
+            
+            // Calculate initial time offset between server and client
+            const clientTime = Date.now();
+            const serverTimestamp = serverTime || clientTime;
+            const timeOffset = clientTime - serverTimestamp;
+            
+            function updateTimer() {
+                // Use server time plus offset for synchronized countdown
+                const synchronizedServerTime = Date.now() - timeOffset;
+                const timeLeft = nextDrawTime - synchronizedServerTime;
+                
+                if (timeLeft <= 0) {
+                    timerElement.textContent = '00:00';
+                    return;
+                }
+                
+                const minutes = Math.floor(timeLeft / 60000);
+                const seconds = Math.floor((timeLeft % 60000) / 1000);
+                
+                timerElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            }
+            
+            updateTimer();
+            setInterval(updateTimer, 1000);
+        }
+
+        // Update game state
+        function updateGameState(data) {
+            updatePlayersCount(data.totalPlayers, data.playersWithBets);
+            updateGameStatus(getGameStatusText(data.gameState), data.gameState);
+            
+            if (data.drawnNumbers && data.drawnNumbers.length > 0) {
+                showDrawnNumbers(data.drawnNumbers);
+            }
+            
+            if (data.nextDrawTime && data.gameState === 'betting') {
+                startTimer(data.nextDrawTime, data.serverTime);
+            }
+        }
+
+        // Get game status text
+        function getGameStatusText(gameState) {
+            switch (gameState) {
+                case 'betting':
+                    return '💰 Place Your Bets';
+                case 'drawing':
+                    return '🎱 Drawing Numbers';
+                case 'results':
+                    return '🎉 Round Results';
+                default:
+                    return 'Loading...';
+            }
+        }
+
+        // Update players count
+        function updatePlayersCount(totalPlayers, playersWithBets) {
+            const statusElement = document.getElementById('game-status');
+            if (statusElement.style.display !== 'none') {
+                const baseStatus = getGameStatusText('betting'); // Get base status for betting phase
+                statusElement.textContent = `${baseStatus} | ${playersWithBets}/${totalPlayers} bets placed`;
+            }
+        }
+
+        // Update players list
+        function updatePlayersList(players) {
+            const playersList = document.getElementById('players-list');
+            playersList.innerHTML = '';
+            
+            if (players.length === 0) {
+                playersList.innerHTML = '<div class="player-item">Waiting for players...</div>';
+                return;
+            }
+            
+            players.forEach((player, index) => {
+                const playerDiv = document.createElement('div');
+                playerDiv.className = 'player-item';
+                playerDiv.innerHTML = `<i class="fas fa-user"></i> ${player}`;
+                playersList.appendChild(playerDiv);
+            });
+        }
+
+        // Show drawn numbers with animation
+        function showDrawnNumbers(drawnNumbers) {
+            // Clear previous drawings
+            clearKenoBoard();
+            
+            // Highlight drawn numbers
+            drawnNumbers.forEach((number, index) => {
+                setTimeout(() => {
+                    const numberElement = document.getElementById(`keno-${number}`);
+                    if (numberElement) {
+                        numberElement.classList.add('drawn');
+                        
+                        // Add winning animation after a delay
+                        setTimeout(() => {
+                            numberElement.classList.add('winning');
+                        }, 1000);
+                    }
+                }, index * 300); // Stagger animations
+            });
+        }
+
+        // Clear keno board
+        function clearKenoBoard() {
+            document.querySelectorAll('.keno-number').forEach(num => {
+                num.classList.remove('drawn', 'winning');
+            });
+        }
+
+        // Show results
+        function showResults(data) {
+            // Could show detailed results here if needed
+            console.log('Showing results:', data.results);
+        }
+
+        // Add chat message
+        function addChatMessage(sender, text) {
+            const messageData = {
+                sender: sender,
+                text: text,
+                timestamp: new Date().toISOString()
+            };
+            
+            // Add to messages array
+            chatMessages.push(messageData);
+            
+            // Trim array if it exceeds max length
+            if (chatMessages.length > MAX_CHAT_MESSAGES) {
+                chatMessages.shift();
+            }
+            
+            // Update display
+            updateChatDisplay();
+        }
+
+        // Update chat display
+        function updateChatDisplay() {
+            const chatContainer = document.getElementById('chat-messages');
+            chatContainer.innerHTML = '';
+            
+            chatMessages.forEach(message => {
+                const messageElement = document.createElement('div');
+                messageElement.className = 'chat-message';
+                
+                const senderSpan = document.createElement('span');
+                senderSpan.className = 'chat-sender';
+                senderSpan.textContent = message.sender + ':';
+                
+                const textSpan = document.createElement('span');
+                textSpan.className = 'chat-text';
+                textSpan.textContent = message.text;
+                
+                messageElement.appendChild(senderSpan);
+                messageElement.appendChild(textSpan);
+                
+                chatContainer.appendChild(messageElement);
+            });
+            
+            // Auto-scroll to bottom
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        // Auto-refresh page every 30 minutes to prevent memory leaks
+        setTimeout(() => {
+            location.reload();
+        }, 30 * 60 * 1000);
+
+        // Show join instructions banner
+        function showJoinInstructions(gameId) {
+            const joinInstructions = document.getElementById('join-instructions');
+            const gameUrl = document.getElementById('game-url');
+            const gameIdForJoin = document.getElementById('game-id-for-join');
+            
+            // Set the game URL (assuming the main game is at the same domain)
+            const baseUrl = window.location.origin;
+            gameUrl.textContent = baseUrl;
+            gameIdForJoin.textContent = gameId;
+            
+            // Show the banner
+            joinInstructions.style.display = 'block';
+            
+            // Update the URL in the banner to include the game ID
+            gameUrl.textContent = `${baseUrl}/?gameId=${gameId}`;
+        }
+
+        console.log('Keno Lobby Display initialized');
+    </script>
+</body>
+</html>

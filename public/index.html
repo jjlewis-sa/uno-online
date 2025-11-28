@@ -3,10 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Multiplayer UNO Game</title>
+    <title>Multiplayer Keno Game</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="animation.css">
-    <link rel="stylesheet" href="card-themes.css">
     <link rel="stylesheet" href="chat.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
     <script src="/socket.io/socket.io.js"></script>
@@ -15,14 +14,20 @@
 </head>
 <body>
     <div id="game-container">
-        <h1>Multiplayer UNO Game</h1>
+        <h1>Multiplayer Keno Game</h1>
         
         <!-- Game Rules Section -->
         <div id="game-rules" style="display: none;">
-            <h2>Game Rules</h2>
-            <p>The objective of UNO is to be the first player to score 500 points. Points are scored by being the first to get rid of all your cards in each round and earning points for the cards remaining in your opponents' hands.</p>
-            <p>Players take turns drawing cards and playing cards from their hand that match the top card of the discard pile in color, number, or symbol. Special cards like Skip, Reverse, and Draw Two add twists to the game.</p>
-            <p>When a player has only one card left, they must yell "UNO!" If they forget and another player catches them before their next turn, they must draw two cards as a penalty.</p>
+            <h2>How to Play Keno</h2>
+            <p>Keno is a lottery-style game where you select numbers and hope they match the drawn numbers.</p>
+            <ul>
+                <li>Select 1-15 numbers from 1-80</li>
+                <li>Place your bet amount</li>
+                <li>20 numbers are drawn every 3 minutes</li>
+                <li>Win based on how many of your numbers match the drawn numbers</li>
+                <li>Payouts increase dramatically with more matches</li>
+            </ul>
+            <p><strong>Payout Example:</strong> Pick 10 numbers, match all 10 = 25,000x your bet!</p>
         </div>
         <button id="toggle-game-rules">Show/Hide Game Rules</button>        
         <!-- Login Screen -->
@@ -41,37 +46,115 @@
             <div>
                 Game ID: <span id="game-id-display"></span>
                 <button id="share-whatsapp" class="share-button">Share via WhatsApp</button>
+                <button id="open-lobby-display" class="share-button" style="margin-left: 10px; background-color: #2196F3;">
+                    <i class="fas fa-tv"></i> Open Lobby Display
+                </button>
             </div>
             <h3>Players:</h3>
             <ul id="player-list"></ul>
-            <button id="start-game">Start Game</button>
+            <p>Waiting for players to join...</p>
+            <div style="margin-top: 20px; padding: 15px; background: rgba(255,255,255,0.1); border-radius: 10px;">
+                <h4>📺 Big Screen TV Display</h4>
+                <p>Click "Open Lobby Display" to show this game on a big screen TV! The lobby display shows:</p>
+                <ul style="text-align: left; margin: 10px 0;">
+                    <li>Large keno board with live draw results</li>
+                    <li>Game ID prominently displayed</li>
+                    <li>Live scrolling chat messages</li>
+                    <li>Current player count and game status</li>
+                </ul>
+            </div>
         </div>
         
         <!-- Game Screen -->
-        <div id="game-status"></div>
         <div id="game-screen" style="display: none;">
-            <div id="opponents-area" class="opponents-container">
-                <!-- Opponents will be added here dynamically -->
+            <!-- Game Status and Timer -->
+            <div id="game-status"></div>
+            <div id="timer-display"></div>
+            
+            <!-- Number Selection Grid -->
+            <div id="number-selection">
+                <h3>Select Your Numbers (1-15)</h3>
+                <div style="margin-bottom: 15px;">
+                    <button id="quick-pick" class="quick-pick-button">
+                        <i class="fas fa-magic"></i> Quick Pick
+                    </button>
+                    <button id="clear-selection" class="clear-selection-button">
+                        <i class="fas fa-trash"></i> Clear All
+                    </button>
+                </div>
+                <div id="keno-grid" class="keno-grid">
+                    <!-- Numbers 1-80 will be generated here -->
+                </div>
+                <div id="selected-numbers-display">
+                    <h4>Selected Numbers: <span id="selected-numbers-list"></span></h4>
+                </div>
             </div>
-            <div id="discard-pile"></div>
-            <div id="player-area">
-                <div id="player-hand"></div>
-                <button id="draw-card">Draw Card</button>
+            
+            <!-- Betting Controls -->
+            <div id="betting-controls">
+                <h3>Place Your Bet</h3>
+                <div id="chip-selection">
+                    <button class="chip" data-amount="1">$1</button>
+                    <button class="chip" data-amount="5">$5</button>
+                    <button class="chip" data-amount="10">$10</button>
+                    <button class="chip" data-amount="25">$25</button>
+                    <button class="chip" data-amount="50">$50</button>
+                    <button class="chip" data-amount="100">$100</button>
+                </div>
+                <div id="bet-amount-display">
+                    Bet Amount: $<span id="current-bet">0</span>
+                </div>
+                <button id="place-bet">Place Bet</button>
             </div>
+            
+            <!-- Players Area -->
+            <div id="players-area">
+                <h3>Players: <span id="players-count">0</span> total, <span id="players-bets">0</span> with bets</h3>
+                <div id="players-list"></div>
+            </div>
+            
+            <!-- Drawing Display -->
+            <div id="drawing-display" style="display: none;">
+                <h3>Drawing Numbers...</h3>
+                <div id="drawn-numbers" class="drawn-numbers">
+                    <!-- Drawn numbers will appear here -->
+                </div>
+            </div>
+            
+            <!-- WhatsApp-Style Chat -->
+            <div id="game-chat" class="game-chat">
+                <div class="chat-header-whatsapp">
+                    <div class="chat-title-whatsapp">
+                        <i class="fas fa-comments"></i>
+                        <span>Game Chat</span>
+                    </div>
+                    <div class="chat-participants">
+                        <span id="chat-players-count">0 players</span>
+                    </div>
+                </div>
+                <div id="chat-messages-whatsapp" class="chat-messages-whatsapp">
+                    <!-- Messages will appear here -->
+                </div>
+                <div class="chat-input-whatsapp">
+                    <input type="text" id="chat-input-whatsapp" placeholder="Type a message..." maxlength="500">
+                    <button id="chat-send-whatsapp" class="chat-send-whatsapp">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Results Display -->
+            <div id="results-display" style="display: none;">
+                <h3>Round Results</h3>
+                <div id="results-content"></div>
+            </div>
+            
+            <!-- Game ID Display -->
             <div id="game-id-display-game-screen" style="display: none;">
                 Game ID: <span id="current-game-id-game-screen"></span>
             </div>
-        </div>        
-        <!-- Color Picker for Wild Cards -->
-        <div id="color-picker" style="display: none;">
-            <h3>Choose a color:</h3>
-            <div class="color-options">
-                <button class="color-btn" data-color="red">Red</button>
-                <button class="color-btn" data-color="green">Green</button>
-                <button class="color-btn" data-color="blue">Blue</button>
-                <button class="color-btn" data-color="yellow">Yellow</button>
-            </div>
         </div>
+        
         <!-- Connection Status Indicator -->
         <div id="connection-status" style="position: fixed; bottom: 10px; right: 10px; font-size: 12px; color: green;">
             Connected
@@ -85,15 +168,14 @@
     </div>
     <!-- Load animation.js with defer to ensure it loads after anime.js -->
     <script src="js/animation.js" defer></script>
-    <!-- Add these before the closing body tag -->
     <script src="js/game.js"></script>    
     <script src="js/sleep.js" async></script>
     <script>
         // WhatsApp sharing functionality
         document.getElementById('share-whatsapp').addEventListener('click', function() {
             const gameId = document.getElementById('game-id-display').textContent;
-            const gameUrl = "https://uno-online-cu1b.onrender.com/?gameId=";
-            const message = `Join my UNO game! Go to ${gameUrl}${gameId}`;
+            const gameUrl = window.location.origin + "/?gameId=";
+            const message = `Join my Keno game! Go to ${gameUrl}${gameId}`;
             const encodedMessage = encodeURIComponent(message);
             const whatsappUrl = `https://wa.me/?text=${encodedMessage}`;
             window.open(whatsappUrl, '_blank');
@@ -101,35 +183,52 @@
         
         // Show/Hide Game Rules functionality
         document.getElementById('toggle-game-rules').addEventListener('click', function() {
-            // Fallback if anime.js hasn't loaded yet
-            if (typeof toggleGameRules === 'function') {
-                toggleGameRules();
-            } else {
-                const gameRules = document.getElementById('game-rules');
-                gameRules.style.display = gameRules.style.display === "none" || gameRules.style.display === "" ? "block" : "none";
+            const gameRules = document.getElementById('game-rules');
+            gameRules.style.display = gameRules.style.display === "none" || gameRules.style.display === "" ? "block" : "none";
+        });
+
+        // Generate Keno grid (numbers 1-80)
+        function generateKenoGrid() {
+            const kenoGrid = document.getElementById('keno-grid');
+            kenoGrid.innerHTML = '';
+            
+            for (let i = 1; i <= 80; i++) {
+                const numberButton = document.createElement('div');
+                numberButton.className = 'keno-number';
+                numberButton.textContent = i;
+                numberButton.dataset.number = i;
+                numberButton.addEventListener('click', function() {
+                    toggleNumberSelection(i);
+                });
+                kenoGrid.appendChild(numberButton);
+            }
+        }
+        
+        // Initialize Keno grid when page loads
+        window.addEventListener('load', function() {
+            generateKenoGrid();
+            
+            // Load Game ID from URL if present
+            let gameId = new URLSearchParams(window.location.search).get('gameId');
+            if (gameId) {
+                document.getElementById('game-id').value = gameId;
             }
         });
 
         // Keepalive functionality for mobile devices
         (function setupKeepalive() {
-            // Reference to the connection status indicator
             const connectionStatus = document.getElementById('connection-status');
             let socket; 
 
-            // Initialize socket connection when it's available
             const initSocketKeepalive = () => {
                 if (typeof io !== 'undefined') {
-                    // Get the socket instance from the game.js if possible
-                    // This assumes the socket is accessible globally or we create a new ping socket
                     if (window.gameSocket) {
                         socket = window.gameSocket;
                     } else {
-                        // If no socket is available yet, try again later
                         setTimeout(initSocketKeepalive, 1000);
                         return;
                     } 
 
-                    // Set up keepalive ping every 30 seconds
                     const keepaliveInterval = setInterval(() => {
                         if (socket && socket.connected) {
                             socket.emit('keepalive');
@@ -138,14 +237,12 @@
                         } else {
                             connectionStatus.textContent = 'Disconnected';
                             connectionStatus.style.color = 'red';
-
-                            // Try to reconnect if disconnected
                             if (socket) {
                                 socket.connect();
                             }
                         }
                     }, 30000);
-                    // Set up event listeners for connection status
+                    
                     socket.on('connect', () => {
                         connectionStatus.textContent = 'Connected';
                         connectionStatus.style.color = 'green';
@@ -156,10 +253,8 @@
                         connectionStatus.style.color = 'red';
                     }); 
 
-                    // Also use the Page Visibility API to handle background tabs
                     document.addEventListener('visibilitychange', () => {
                         if (document.visibilityState === 'visible') {
-                            // When tab becomes visible again, force a ping
                             if (socket && socket.connected) {
                                 socket.emit('keepalive');
                             } else if (socket) {
@@ -167,32 +262,26 @@
                             }
                         }
                     }); 
-                    // Handle mobile-specific events
+                    
                     window.addEventListener('pagehide', () => {
-                        // Store timestamp when page is hidden
-                        localStorage.setItem('unoLastActive', Date.now());
+                        localStorage.setItem('kenoLastActive', Date.now());
                     }); 
 
                     window.addEventListener('pageshow', () => {
-                        const lastActive = parseInt(localStorage.getItem('unoLastActive') || '0');
+                        const lastActive = parseInt(localStorage.getItem('kenoLastActive') || '0');
                         const now = Date.now(); 
-
-                        // If it's been more than 1 minute since last active, force reconnect
                         if (now - lastActive > 60000) {
                             if (socket) {
                                 socket.connect();
                             }
                         }
-                    });                } else {
-                    // If socket.io isn't loaded yet, try again in a second
+                    });                
+                } else {
                     setTimeout(initSocketKeepalive, 1000);
                 }
             }; 
 
-            // Start the keepalive initialization
             initSocketKeepalive(); 
-
-            
         })();
 
         // Display Game ID when logged in
@@ -204,27 +293,16 @@
             document.getElementById('game-id-display-game-screen').style.display = 'block';
         });
 
-        // Load Game ID after page load
-        window.addEventListener('load', function() {
-            let gameId = new URLSearchParams(window.location.search).get('gameId');
-            document.getElementById('game-id').value = gameId;                
+        // Open Lobby Display functionality
+        document.getElementById('open-lobby-display').addEventListener('click', function() {
+            const gameId = document.getElementById('game-id-display').textContent;
+            if (gameId) {
+                const lobbyUrl = `${window.location.origin}/lobby-display.html?gameId=${gameId}`;
+                window.open(lobbyUrl, '_blank', 'width=1200,height=800');
+            }
         });
     </script>
     <script src="js/textChat.js"></script>
 
 </body>
 </html>
-<script>
-  document.getElementById('init-chat').addEventListener('click', function() {
-    const gameId = document.getElementById('game-id-display').textContent || 'test-game';
-    const username = document.getElementById('username').value || 'test-user';
-    console.log('Manual chat initialization with:', gameId, username);
-    
-    if (window.chatSystem && typeof window.chatSystem.init === 'function') {
-      window.chatCleanup = window.chatSystem.init(gameId, username);
-      console.log('Chat manually initialized');
-    } else {
-      console.error('Chat system not available for manual initialization');
-    }
-  });
-</script>
